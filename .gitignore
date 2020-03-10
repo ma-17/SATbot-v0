@@ -6,6 +6,7 @@
 
 #Resource file
 */Resource.resx
+*/Resource.Designer.cs
 
 # User-specific files
 *.rsuser
