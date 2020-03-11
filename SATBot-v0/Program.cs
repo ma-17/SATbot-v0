@@ -1,4 +1,6 @@
 ﻿using System;
+using Google.Rpc.Context;
+using SATBot_v0.Models;
 
 namespace SATBot_v0
 {
@@ -6,7 +8,21 @@ namespace SATBot_v0
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var articleResponse = NewsAPIMethods.RetrieveNewsAsync(Resource.News_API_Key);
+
+            try
+            {
+                var articles = articleResponse.Result.Articles;
+
+                foreach (var article in articles)
+                {
+                    Console.WriteLine($"Title: {article.Title}\nDescription: {article.Description}\n");
+                }
+            }
+            catch
+            {
+                Console.WriteLine("There is no top headlines");
+            }
         }
     }
 }
