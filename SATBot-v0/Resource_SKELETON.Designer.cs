@@ -70,7 +70,7 @@ namespace SATBot_v0 {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to mongodb+srv://back_end:satbot@satbot-v0-vqesc.azure.mongodb.net/test?retryWrites=true&amp;w=majority.
         /// </summary>
         internal static string DBConnectionString {
             get {

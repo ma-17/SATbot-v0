@@ -122,7 +122,7 @@
     <comment>Your Alpaca API key</comment>
   </data>
   <data name="DBConnectionString" xml:space="preserve">
-    <value />
+    <value>mongodb+srv://back_end:satbot@satbot-v0-vqesc.azure.mongodb.net/test?retryWrites=true&amp;w=majority</value>
     <comment>Common value: DO NOT EDIT</comment>
   </data>
   <data name="News_API_Key" xml:space="preserve">
