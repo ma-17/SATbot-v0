@@ -8,11 +8,11 @@ namespace SATBot_v0
     {
         static void Main(string[] args)
         {
-            var articleResponse = NewsAPIMethods.RetrieveNewsAsync(Resource.News_API_Key);
+            var articleResponse = NewsAPIMethods.RetrieveNewsAsync();
 
             try
             {
-                var articles = articleResponse.Result.Articles;
+                var articles = articleResponse.Result;
 
                 foreach (var article in articles)
                 {

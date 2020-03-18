@@ -129,8 +129,8 @@
     <value />
     <comment>Your Google News API key</comment>
   </data>
-  <data name="NLP_API_Key" xml:space="preserve">
+  <data name="NLP_API_Key_Path" xml:space="preserve">
     <value />
-    <comment>Your Google NLP API key</comment>
+    <comment>The path of Google NLP API json file</comment>
   </data>
 </root>
