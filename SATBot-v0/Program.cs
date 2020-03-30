@@ -17,7 +17,7 @@ namespace SATBot_v0
                 var conn = new MongoConnection();
                 var testDoc = new BsonDocument
                 {
-                    { "student_id", 10002 },
+                    { "student_id", 10006 },
                     { "scores", new BsonArray
                         {
                         new BsonDocument{ {"type", "exam"}, {"score", 88.12334193287023 } },
@@ -36,6 +36,11 @@ namespace SATBot_v0
                 //  READ
                 var latestDoc = conn.GetLast("SATbot", "news_info", "_id");
                 Console.WriteLine(latestDoc);
+
+                //  READ WITH FILTER
+                conn.GetStock("SecurityName", "Apple");
+
+
                 //END DB TESTING
                 
                 
@@ -43,12 +48,16 @@ namespace SATBot_v0
                 Console.WriteLine($"{CheckApplicationEnvironment()}\n");
 
                 var articles = NewsAPIMethods.RetrieveNewsAsync().Result;
+                Console.WriteLine("Retrieved articles maybe");
+                Console.WriteLine(articles);
 
                 Console.WriteLine("Top headlines:\n");
                 foreach (var article in articles)
                 {
                     Console.WriteLine($"Title: {article.Title}\nDescription: {article.Description}\n\n");
                 }
+
+                
 
                 Console.WriteLine("---------------------------------------------------------------------------------------");
                 Console.WriteLine("Entity Sentiment Analysis of the first article:\n");

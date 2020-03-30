@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
 namespace SATBot_v0.Models
@@ -164,6 +165,37 @@ namespace SATBot_v0.Models
 
             var latestDoc = docs.First<BsonDocument>();
             return latestDoc;
+        }
+
+        public BsonDocument GetFilter(string collectionName, string filterField, string filterCriteria)
+        {
+            var filter = Builders<BsonDocument>.Filter.Regex(filterField, new BsonRegularExpression(".*" + filterCriteria + ".*", "i"));
+            var database = GetDatabase();
+            var collection = database.GetCollection<BsonDocument>(collectionName);
+            var results = collection.Find(filter);
+            
+            foreach(BsonDocument doc in results.ToList())
+            {
+                Console.WriteLine(doc);
+            }
+
+            return null;
+        }
+
+        public BsonDocument GetStock(string filterField, string filterCriteria)
+        {
+            var filter = Builders<BsonDocument>.Filter.Regex(filterField, new BsonRegularExpression(".*" + filterCriteria + ".*", "i"));
+            var database = GetDatabase();
+            var collection = database.GetCollection<BsonDocument>("stock_listing");
+            var results = collection.Find(filter);
+            
+            foreach(BsonDocument doc in results.ToList())
+            {
+                var stockListing = BsonSerializer.Deserialize<StockListing>(doc);
+                Console.WriteLine(stockListing.Symbol + " " + stockListing.SecurityName);
+            }
+
+            return null;
         }
 
 
