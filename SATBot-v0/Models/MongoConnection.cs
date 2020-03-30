@@ -30,6 +30,13 @@ namespace SATBot_v0.Models
             return client;
         }
 
+        public IMongoDatabase GetDatabase()
+        {
+            var client = GetClient();
+            var database = client.GetDatabase(databaseName);
+            return database;
+        }
+
         public IMongoDatabase GetDatabase(string dbName)
         {
             var client = GetClient();
@@ -43,6 +50,28 @@ namespace SATBot_v0.Models
             var collection = database.GetCollection<BsonDocument>(collectionName);
             return collection;
         }
+
+        public IMongoCollection<BsonDocument> GetCollection(string collectionName)
+        {
+            var database = GetDatabase();
+            var collection = database.GetCollection<BsonDocument>(collectionName);
+            return collection;
+        }
+
+        public string InsertDocument(string collectionName, BsonDocument document)
+        {
+            try
+            {
+                var collection = GetCollection(collectionName);
+                collection.InsertOne(document);
+                return "Insert success!";
+
+            } catch (Exception ex)
+            {
+                return "Exception!: " + ex.StackTrace;
+            }
+        }
+        
 
         public string InsertDocument(string dbName, string collectionName, BsonDocument document)
         {
@@ -58,12 +87,32 @@ namespace SATBot_v0.Models
             }
         }
 
+        public BsonDocument GetFirstDocument(string collectionName)
+        {
+            var database = GetDatabase();
+            var collection = database.GetCollection<BsonDocument>(collectionName);
+
+            var doc = collection.Find(new BsonDocument()).FirstOrDefault();
+
+            return doc;
+        }
+
         public BsonDocument GetFirstDocument(string dbName, string collectionName)
         {
             var database = GetDatabase(dbName);
             var collection = database.GetCollection<BsonDocument>(collectionName);
 
             var doc = collection.Find(new BsonDocument()).FirstOrDefault();
+
+            return doc;
+        }
+
+        public List<BsonDocument> GetAllDocuments(string collectionName)
+        {
+            var database = GetDatabase();
+            var collection = database.GetCollection<BsonDocument>(collectionName);
+
+            var doc = collection.Find(new BsonDocument()).ToList();
 
             return doc;
         }
@@ -84,6 +133,32 @@ namespace SATBot_v0.Models
 
 
             var database = GetDatabase(dbName);
+            var collection = database.GetCollection<BsonDocument>(collectionName);
+            var docs = collection.Find(new BsonDocument()).Sort(sort);
+
+            var latestDoc = docs.First<BsonDocument>();
+            return latestDoc;
+        }
+
+        public BsonDocument GetLast(string collectionName, string sortCriteria)
+        {
+            var sort = Builders<BsonDocument>.Sort.Descending(sortCriteria);
+
+
+            var database = GetDatabase();
+            var collection = database.GetCollection<BsonDocument>(collectionName);
+            var docs = collection.Find(new BsonDocument()).Sort(sort);
+
+            var latestDoc = docs.First<BsonDocument>();
+            return latestDoc;
+        }
+
+        public BsonDocument GetLast(string collectionName)
+        {
+            var sort = Builders<BsonDocument>.Sort.Descending("_id");
+
+
+            var database = GetDatabase();
             var collection = database.GetCollection<BsonDocument>(collectionName);
             var docs = collection.Find(new BsonDocument()).Sort(sort);
 
