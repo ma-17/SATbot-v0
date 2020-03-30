@@ -182,20 +182,23 @@ namespace SATBot_v0.Models
             return null;
         }
 
-        public BsonDocument GetStock(string filterField, string filterCriteria)
+        public List<StockListing> GetStock(string filterField, string filterCriteria)
         {
             var filter = Builders<BsonDocument>.Filter.Regex(filterField, new BsonRegularExpression(".*" + filterCriteria + ".*", "i"));
             var database = GetDatabase();
             var collection = database.GetCollection<BsonDocument>("stock_listing");
             var results = collection.Find(filter);
+
+            List<StockListing> stocks = new List<StockListing>();
             
             foreach(BsonDocument doc in results.ToList())
             {
                 var stockListing = BsonSerializer.Deserialize<StockListing>(doc);
+                stocks.Add(stockListing);
                 Console.WriteLine(stockListing.Symbol + " " + stockListing.SecurityName);
             }
 
-            return null;
+            return stocks;
         }
 
 

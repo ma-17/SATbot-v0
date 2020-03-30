@@ -38,7 +38,7 @@ namespace SATBot_v0
                 Console.WriteLine(latestDoc);
 
                 //  READ WITH FILTER
-                conn.GetStock("SecurityName", "Apple");
+                conn.GetStocks("SecurityName", "Apple");
 
 
                 //END DB TESTING
