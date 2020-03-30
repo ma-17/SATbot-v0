@@ -1,6 +1,7 @@
 ﻿using System;
 using Google.Protobuf;
 using Google.Rpc.Context;
+using MongoDB.Bson;
 using SATBot_v0.Models;
 
 namespace SATBot_v0
@@ -11,6 +12,34 @@ namespace SATBot_v0
         {
             try
             {
+
+                //DB TESTING
+                var conn = new MongoConnection();
+                var testDoc = new BsonDocument
+                {
+                    { "student_id", 10002 },
+                    { "scores", new BsonArray
+                        {
+                        new BsonDocument{ {"type", "exam"}, {"score", 88.12334193287023 } },
+                        new BsonDocument{ {"type", "quiz"}, {"score", 74.92381029342834 } },
+                        new BsonDocument{ {"type", "homework"}, {"score", 89.97929384290324 } },
+                        new BsonDocument{ {"type", "homework"}, {"score", 82.12931030513218 } }
+                        }
+                    },
+                    { "class_id", 480}
+                };
+
+                //  WRITE
+                var result = conn.InsertDocument("SATbot", "news_info", testDoc);
+                Console.WriteLine(result);
+
+                //  READ
+                var latestDoc = conn.GetLast("SATbot", "news_info", "_id");
+                Console.WriteLine(latestDoc);
+                //END DB TESTING
+                
+                
+                
                 Console.WriteLine($"{CheckApplicationEnvironment()}\n");
 
                 var articles = NewsAPIMethods.RetrieveNewsAsync().Result;
