@@ -19,5 +19,9 @@ namespace SATBot_v0.Models
         public string ETF { get; set; }
         public string NextShares { get; set; }
         public string Exchange { get; set; }
+        public string CompanyName { get; set; }
+        public string ExchangeDefault { get; set; }
+        public string CQSSymbol { get; set; }
+        public string NASDAQSymbol { get; set; }
     }
 }

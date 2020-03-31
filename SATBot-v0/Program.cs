@@ -40,8 +40,17 @@ namespace SATBot_v0
                  *     3) Write to Database (news_info)
                  *     4) Analyse Sentiment
                  *     5) Write Sentiment to Database (sentiment_results)
-                 *     6) Lookup Company
-                 *     7) Write Company to Database (stock_info)
+                 *     6) Lookup Company - 
+                 *          6.1) By Entity Where Type = Organization:
+                                 * For each entity,
+                                 * If type = organization
+                                 * conn.GetStocks("SecurityName", entityValue);
+                                 * If list.empty
+                                 *      //write that it's empty into the db or ignore
+                                 *
+                                 * If !list.empty
+                                 *      //write into stock_info
+                 * 7) Write Company to Database (stock_info)
                  * 
                  */
 
@@ -81,6 +90,7 @@ namespace SATBot_v0
                 //  READ WITH FILTER
                 conn.GetStocks("SecurityName", "Apple");
                 conn.GetStocks("SecurityName", "Microsoft");
+                conn.GetStocks("SecurityName", "Hathaway");
 
                 //END DB TESTING
 

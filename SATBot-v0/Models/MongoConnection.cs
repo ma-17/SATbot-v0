@@ -183,7 +183,7 @@ namespace SATBot_v0.Models
 
         public List<StockListing> GetStocks(string filterField, string filterCriteria)
         {
-            var filter = Builders<BsonDocument>.Filter.Regex(filterField, new BsonRegularExpression(".*" + filterCriteria + ".*", "i"));
+            var filter = Builders<BsonDocument>.Filter.Regex(filterField, new BsonRegularExpression(".*" + filterCriteria + ".*"));
             var database = GetDatabase();
             var collection = database.GetCollection<BsonDocument>("stock_listing");
             var results = collection.Find(filter);
