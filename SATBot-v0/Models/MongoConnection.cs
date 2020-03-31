@@ -7,7 +7,7 @@ using MongoDB.Driver;
 
 namespace SATBot_v0.Models
 {
-    class MongoConnection
+    public class MongoConnection
     {
         //https://www.mongodb.com/blog/post/quick-start-c-sharp-and-mongodb--creating-documents
         //https://www.mongodb.com/blog/post/quick-start-c-and-mongodb--read-operations
@@ -178,17 +178,12 @@ namespace SATBot_v0.Models
             var collection = database.GetCollection<BsonDocument>(collectionName);
             var results = collection.Find(filter);
             
-            foreach(BsonDocument doc in results.ToList())
-            {
-                Console.WriteLine(doc);
-            }
-
             return results.ToList();
         }
 
         public List<StockListing> GetStocks(string filterField, string filterCriteria)
         {
-            var filter = Builders<BsonDocument>.Filter.Regex(filterField, new BsonRegularExpression(".*" + filterCriteria + ".*", "i"));
+            var filter = Builders<BsonDocument>.Filter.Regex(filterField, new BsonRegularExpression(".*" + filterCriteria + ".*"));
             var database = GetDatabase();
             var collection = database.GetCollection<BsonDocument>("stock_listing");
             var results = collection.Find(filter);

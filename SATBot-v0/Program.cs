@@ -12,7 +12,7 @@ namespace SATBot_v0
         /*
          * @TODO:
          * 
-         * - Write News Results Into news_info
+         * - Write News Results Into news_info - DONE! woo!
          * - Write Sentiment Results Into sentiment_results
          * - Do Basic Company Lookup (search by sentiment: entity - type = organization)
          * - Write Company to stock_info
@@ -24,14 +24,43 @@ namespace SATBot_v0
          * - Companies may trade under different names (ex. Google - Alphabet)
          * - Logging the industry? Possibly (consider: adding NLP category to stock_listing) - will have to figure out update queries for Mongo
          * - Associating other entity results with a stock (ex. tba)
+         * 
          */
 
         static void Main(string[] args)
         {
             try
             {
-                //DB TESTING
+                /*
+                 * Program Flow:
+                 * =============
+                 * 
+                 * 1) Grab News
+                 * 2) For Each Article:
+                 *     3) Write to Database (news_info)
+                 *     4) Analyse Sentiment
+                 *     5) Write Sentiment to Database (sentiment_results)
+                 *     6) Lookup Company - 
+                 *          6.1) By Entity Where Type = Organization:
+                                 * For each entity,
+                                 * If type = organization
+                                 * conn.GetStocks("SecurityName", entityValue);
+                                 * If list.empty
+                                 *      //write that it's empty into the db or ignore
+                                 *
+                                 * If !list.empty
+                                 *      //write into stock_info
+                 * 7) Write Company to Database (stock_info)
+                 * 
+                 */
+
+
+                //Get MongoDB Connection
                 var conn = new MongoConnection();
+
+
+                //DB TESTING
+
                 var testDoc = new BsonDocument
                 {
                     { "student_id", 10011 },
@@ -47,37 +76,69 @@ namespace SATBot_v0
                     { "class_id", 480 }
                 };
 
-                //  WRITE
-                var result = conn.InsertDocument("SATbot", "news_info", testDoc);
+                //  WRITE - implemented below
+                //var result = conn.InsertDocument("SATbot", "news_info", testDoc);
                 //var result2 = conn.InsertDocument("stock_listing", testDoc);
-                Console.WriteLine(result);
+                //Console.WriteLine(result);
 
                 //  READ
-                var latestDoc = conn.GetLast("SATbot", "news_info", "_id");
-                var latest2 = conn.GetLast("news_info"); //gets last entry by _id
+                //var latestDoc = conn.GetLast("SATbot", "news_info", "_id");
+                //var latest2 = conn.GetLast("news_info"); //gets last entry by _id
                 //var latest3 = conn.GetLast("news_info", "Date Retrieved"); //get last entry by criteria
-                Console.WriteLine(latestDoc);
+                //Console.WriteLine(latestDoc);
 
                 //  READ WITH FILTER
                 conn.GetStocks("SecurityName", "Apple");
                 conn.GetStocks("SecurityName", "Microsoft");
+                conn.GetStocks("SecurityName", "Hathaway");
 
                 //END DB TESTING
 
-
+                //Environment Check
                 Console.WriteLine();
                 CheckApplicationEnvironment();
-
+                
+                //Retrieve Articles
                 var articles = NewsAPIMethods.RetrieveNewsAsync().Result;
                 Console.WriteLine("Retrieved articles maybe");
                 Console.WriteLine(articles);
 
-                Console.WriteLine("Top headlines:\n");
+                Console.WriteLine("Articles:\n");
+
+                //Write Articles to DB
                 foreach (var article in articles)
                 {
-                    Console.WriteLine($"Title: {article.Title}\nDescription: {article.Description}\n\n");
-                }
+                    //Insert to DB
+                    string result = NewsAPIMethods.InsertToDB(article, conn);
+                    Console.WriteLine(result);
+                    Console.WriteLine();
 
+                    //Get Sentiment Entities
+                    var sentiment = NLPMethods.AnalyzeEntitySentimentAsync(article.Description);
+                    var sentimentResult = sentiment.Result;
+                    var entities = sentimentResult.Entities;
+
+                    //Add Entities to BsonArray
+                    BsonArray entityArray = new BsonArray();
+                    foreach (var entity in entities)
+                    {
+                        entityArray.Add(entity.ToBsonDocument());
+                    }
+
+                    //Create Sentiment Bson Doc
+                    BsonDocument sentimentDoc = new BsonDocument
+                    {
+                        { "new_info_id", result },
+                        { "overall_news_sentiment", "TBA" },
+                        { "entities", entityArray },
+                        { "analyzed_at", DateTime.Now }
+                    };
+
+                    //Insert to DB
+                    conn.InsertDocument("sentiment_results", sentimentDoc);
+                }
+                
+                //Sentiment Analysis Stuff
                 Console.WriteLine("---------------------------------------------------------------------------------------");
                 Console.WriteLine("Entity Sentiment Analysis of the first article:\n");
                 Console.WriteLine($"Title: {articles[0].Title}");
