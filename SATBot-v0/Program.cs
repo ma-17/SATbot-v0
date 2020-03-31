@@ -15,10 +15,15 @@ namespace SATBot_v0
          * - Write News Results Into news_info
          * - Write Sentiment Results Into sentiment_results
          * - Do Basic Company Lookup (search by sentiment: entity - type = organization)
+         * - Write Company to stock_info
          * 
          * For Demo/Testing:
          * - Make sure 'live news updates' works, but for the actual demo/functionality, get all news by time period (Ex. last 24hrs)
-         * - 
+         * 
+         * Additional Considerations:
+         * - Companies may trade under different names (ex. Google - Alphabet)
+         * - Logging the industry? Possibly (consider: adding NLP category to stock_listing) - will have to figure out update queries for Mongo
+         * - Associating other entity results with a stock (ex. tba)
          */
 
         static void Main(string[] args)
