@@ -178,11 +178,6 @@ namespace SATBot_v0.Models
             var collection = database.GetCollection<BsonDocument>(collectionName);
             var results = collection.Find(filter);
             
-            foreach(BsonDocument doc in results.ToList())
-            {
-                Console.WriteLine(doc);
-            }
-
             return results.ToList();
         }
 

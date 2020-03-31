@@ -12,7 +12,7 @@ namespace SATBot_v0
         /*
          * @TODO:
          * 
-         * - Write News Results Into news_info
+         * - Write News Results Into news_info - DONE! woo!
          * - Write Sentiment Results Into sentiment_results
          * - Do Basic Company Lookup (search by sentiment: entity - type = organization)
          * - Write Company to stock_info
@@ -31,6 +31,21 @@ namespace SATBot_v0
         {
             try
             {
+                /*
+                 * Program Flow:
+                 * =============
+                 * 
+                 * 1) Grab News
+                 * 2) For Each Article:
+                 *     3) Write to Database (news_info)
+                 *     4) Analyse Sentiment
+                 *     5) Write Sentiment to Database (sentiment_results)
+                 *     6) Lookup Company
+                 *     7) Write Company to Database (stock_info)
+                 * 
+                 */
+
+
                 //Get MongoDB Connection
                 var conn = new MongoConnection();
 
@@ -87,9 +102,33 @@ namespace SATBot_v0
                     string result = NewsAPIMethods.InsertToDB(article, conn);
                     Console.WriteLine(result);
                     Console.WriteLine();
+
+                    //Get Sentiment Entities
+                    var sentiment = NLPMethods.AnalyzeEntitySentimentAsync(article.Description);
+                    var sentimentResult = sentiment.Result;
+                    var entities = sentimentResult.Entities;
+
+                    //Add Entities to BsonArray
+                    BsonArray entityArray = new BsonArray();
+                    foreach (var entity in entities)
+                    {
+                        entityArray.Add(entity.ToBsonDocument());
+                    }
+
+                    //Create Sentiment Bson Doc
+                    BsonDocument sentimentDoc = new BsonDocument
+                    {
+                        { "new_info_id", result },
+                        { "overall_news_sentiment", "TBA" },
+                        { "entities", entityArray },
+                        { "analyzed_at", DateTime.Now }
+                    };
+
+                    //Insert to DB
+                    conn.InsertDocument("sentiment_results", sentimentDoc);
                 }
-
-
+                
+                //Sentiment Analysis Stuff
                 Console.WriteLine("---------------------------------------------------------------------------------------");
                 Console.WriteLine("Entity Sentiment Analysis of the first article:\n");
                 Console.WriteLine($"Title: {articles[0].Title}");

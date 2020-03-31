@@ -55,7 +55,8 @@ namespace SATBot_v0.Models
             var doc = article.ToBsonDocument();
 
             //Add Retrieved At
-            doc.Add(new BsonElement("RetrievedAt", DateTime.Now));
+            DateTime now = DateTime.Now;
+            doc.Add(new BsonElement("RetrievedAt", now));
 
             string title = article.Title;
             DateTime? publishedAt = article.PublishedAt;
@@ -83,6 +84,13 @@ namespace SATBot_v0.Models
 
                 //Insert to DB
                 conn.InsertDocument("news_info", doc);
+
+                //Retrieve last item and return _id
+                List<BsonDocument> lastArticle = conn.GetFilter("news_info", "RetrievedAt", now.ToString());
+                if (lastArticle.Count > 0)
+                {
+                    return lastArticle[0].GetValue("_id").ToString();
+                }
 
             } catch (Exception ex)
             {
