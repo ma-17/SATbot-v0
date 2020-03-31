@@ -85,12 +85,17 @@ namespace SATBot_v0.Models
                 //Insert to DB
                 conn.InsertDocument("news_info", doc);
 
+                //@TODO: TO BE TESTED - not 100% sure it's working properly.
                 //Retrieve last item and return _id
                 List<BsonDocument> lastArticle = conn.GetFilter("news_info", "RetrievedAt", now.ToString());
                 if (lastArticle.Count > 0)
                 {
                     return lastArticle[0].GetValue("_id").ToString();
+                } else
+                {
+                    return conn.GetLast("news_info").GetValue("_id").ToString();
                 }
+
 
             } catch (Exception ex)
             {
