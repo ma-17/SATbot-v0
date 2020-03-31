@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using NewsAPI;
 using NewsAPI.Constants;
 using NewsAPI.Models;
+using MongoDB.Bson;
 
 namespace SATBot_v0.Models
 {
@@ -46,6 +47,49 @@ namespace SATBot_v0.Models
                 throw new Exception(response.Error.Message);
             }
             return response.Articles;
+        }
+
+        public static string InsertToDB(Article article, MongoConnection conn)
+        {
+            //Convert to Bson
+            var doc = article.ToBsonDocument();
+
+            //Add Retrieved At
+            doc.Add(new BsonElement("RetrievedAt", DateTime.Now));
+
+            string title = article.Title;
+            DateTime? publishedAt = article.PublishedAt;
+
+            try
+            {
+                List<BsonDocument> results = conn.GetFilter("news_info", "Title", title);
+
+                if (results.Count > 0)
+                {
+                    if (publishedAt != null)
+                    {
+                        foreach (BsonDocument result in results)
+                        {
+                            var publishedAtCurrent = new BsonDateTime((DateTime)publishedAt);
+                            var publishedAtResult = result.GetValue("PublishedAt");
+
+                            if (publishedAt == publishedAtResult)
+                            {
+                                return "Article: \"" + title + "\" exists in db with id: " + result.GetValue("_id");
+                            }
+                        }
+                    }                    
+                }
+
+                //Insert to DB
+                conn.InsertDocument("news_info", doc);
+
+            } catch (Exception ex)
+            {
+                return "Exception at NewsAPIMethods InsertToFB!: " + ex.Message;
+            }
+
+            return "Successfully added article to db";
         }
     }
 }

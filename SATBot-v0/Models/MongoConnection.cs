@@ -7,7 +7,7 @@ using MongoDB.Driver;
 
 namespace SATBot_v0.Models
 {
-    class MongoConnection
+    public class MongoConnection
     {
         //https://www.mongodb.com/blog/post/quick-start-c-sharp-and-mongodb--creating-documents
         //https://www.mongodb.com/blog/post/quick-start-c-and-mongodb--read-operations

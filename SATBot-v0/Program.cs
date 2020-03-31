@@ -24,14 +24,19 @@ namespace SATBot_v0
          * - Companies may trade under different names (ex. Google - Alphabet)
          * - Logging the industry? Possibly (consider: adding NLP category to stock_listing) - will have to figure out update queries for Mongo
          * - Associating other entity results with a stock (ex. tba)
+         * 
          */
 
         static void Main(string[] args)
         {
             try
             {
-                //DB TESTING
+                //Get MongoDB Connection
                 var conn = new MongoConnection();
+
+
+                //DB TESTING
+
                 var testDoc = new BsonDocument
                 {
                     { "student_id", 10011 },
@@ -47,16 +52,16 @@ namespace SATBot_v0
                     { "class_id", 480 }
                 };
 
-                //  WRITE
-                var result = conn.InsertDocument("SATbot", "news_info", testDoc);
+                //  WRITE - implemented below
+                //var result = conn.InsertDocument("SATbot", "news_info", testDoc);
                 //var result2 = conn.InsertDocument("stock_listing", testDoc);
-                Console.WriteLine(result);
+                //Console.WriteLine(result);
 
                 //  READ
-                var latestDoc = conn.GetLast("SATbot", "news_info", "_id");
-                var latest2 = conn.GetLast("news_info"); //gets last entry by _id
+                //var latestDoc = conn.GetLast("SATbot", "news_info", "_id");
+                //var latest2 = conn.GetLast("news_info"); //gets last entry by _id
                 //var latest3 = conn.GetLast("news_info", "Date Retrieved"); //get last entry by criteria
-                Console.WriteLine(latestDoc);
+                //Console.WriteLine(latestDoc);
 
                 //  READ WITH FILTER
                 conn.GetStocks("SecurityName", "Apple");
@@ -64,19 +69,26 @@ namespace SATBot_v0
 
                 //END DB TESTING
 
-
+                //Environment Check
                 Console.WriteLine();
                 CheckApplicationEnvironment();
-
+                
+                //Retrieve Articles
                 var articles = NewsAPIMethods.RetrieveNewsAsync().Result;
                 Console.WriteLine("Retrieved articles maybe");
                 Console.WriteLine(articles);
 
-                Console.WriteLine("Top headlines:\n");
+                Console.WriteLine("Articles:\n");
+
+                //Write Articles to DB
                 foreach (var article in articles)
                 {
-                    Console.WriteLine($"Title: {article.Title}\nDescription: {article.Description}\n\n");
+                    //Insert to DB
+                    string result = NewsAPIMethods.InsertToDB(article, conn);
+                    Console.WriteLine(result);
+                    Console.WriteLine();
                 }
+
 
                 Console.WriteLine("---------------------------------------------------------------------------------------");
                 Console.WriteLine("Entity Sentiment Analysis of the first article:\n");
