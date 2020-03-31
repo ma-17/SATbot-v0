@@ -40,7 +40,6 @@ namespace SATBot_v0
                 //  READ WITH FILTER
                 conn.GetStocks("SecurityName", "Apple");
 
-
                 //END DB TESTING
                 
                 
