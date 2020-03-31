@@ -105,7 +105,6 @@ namespace SATBot_v0
                    Description: Google and Microsoft have redesigned native form controls -- buttons and various input elements you see on web forms -- to look more harmonious and be more touch-friendly. They spent the past year working together to design a new theme and make built-in form .
                  */
 
-                
                 var entitySentimentTest = NLPMethods.AnalyzeEntitySentimentAsync("Google and Microsoft have redesigned native form controls -- buttons and various input elements you see on web forms -- to look more harmonious and be more touch-friendly. They spent the past year working together to design a new theme and make built-in form.").Result;
                 Console.WriteLine("Google and Microsoft are working to make web forms more touch-friendly");
                 Console.WriteLine(entitySentimentTest);
