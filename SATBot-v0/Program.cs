@@ -42,10 +42,10 @@ namespace SATBot_v0
 
 
                 //END DB TESTING
-                
-                
-                
-                Console.WriteLine($"{CheckApplicationEnvironment()}\n");
+
+
+                Console.WriteLine();
+                CheckApplicationEnvironment();
 
                 var articles = NewsAPIMethods.RetrieveNewsAsync().Result;
                 Console.WriteLine("Retrieved articles maybe");
@@ -56,8 +56,6 @@ namespace SATBot_v0
                 {
                     Console.WriteLine($"Title: {article.Title}\nDescription: {article.Description}\n\n");
                 }
-
-                
 
                 Console.WriteLine("---------------------------------------------------------------------------------------");
                 Console.WriteLine("Entity Sentiment Analysis of the first article:\n");
@@ -80,39 +78,37 @@ namespace SATBot_v0
         /// <summary>
         /// Check all application environment
         /// </summary>
-        public static string CheckApplicationEnvironment()
+        public static void CheckApplicationEnvironment()
         {
-            string message = "";
-
+            Console.WriteLine("Checking NewsAPI environment");
             if (!NewsAPIMethods.IsNewsEnvironmentReady())
             {
-                message += "News API Key has not been set up.\n";
-            }
-
-            if (!NLPMethods.IsNLPEnvironmentReady())
-            {
-                message += "Google NLP environment variable has not been set up.\n" +
-                           "Setting environment variable for Google Application Credential...\n";
-                try
-                {
-                    NLPMethods.SetNLPEnvironmentVariable();
-                }
-                catch (Exception e)
-                {
-                    message += e.Message;
-                }
-            }
-
-            if (message.Equals(""))
-            {
-                message = "Application environment is already set up!";
+                Console.WriteLine("News API Key has not been set up.\n");
             }
             else
             {
-                throw new Exception(message);
+                Console.WriteLine("NewsAPI environment has been set up");
             }
 
-            return message;
+            Console.WriteLine("Checking NLP environment");
+            if (!NLPMethods.IsNLPEnvironmentReady())
+            {
+                Console.WriteLine("Google NLP environment variable has not been set up.\n" +
+                           "Setting environment variable for Google Application Credential...\n");
+                try
+                {
+                    NLPMethods.SetNLPEnvironmentVariable();
+                    Console.WriteLine("Successfully set  up NLP environment variable");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+            else
+            {
+                Console.WriteLine("NLP environment has been set up");
+            }
         }
     }
 }
