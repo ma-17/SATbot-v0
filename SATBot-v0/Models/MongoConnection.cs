@@ -59,6 +59,7 @@ namespace SATBot_v0.Models
             return collection;
         }
 
+        //Insert Document Into Collection
         public string InsertDocument(string collectionName, BsonDocument document)
         {
             try
@@ -71,8 +72,7 @@ namespace SATBot_v0.Models
             {
                 return "Exception!: " + ex.StackTrace;
             }
-        }
-        
+        }        
 
         public string InsertDocument(string dbName, string collectionName, BsonDocument document)
         {
@@ -88,6 +88,7 @@ namespace SATBot_v0.Models
             }
         }
 
+        //Gets the first document in a collection
         public BsonDocument GetFirstDocument(string collectionName)
         {
             var database = GetDatabase();
@@ -108,6 +109,7 @@ namespace SATBot_v0.Models
             return doc;
         }
 
+        //Gets all docs in a collection and returns as BSON doc list
         public List<BsonDocument> GetAllDocuments(string collectionName)
         {
             var database = GetDatabase();
@@ -128,6 +130,7 @@ namespace SATBot_v0.Models
             return doc;
         }
 
+        //Get last document by criteria (field name)
         public BsonDocument GetLast(string dbName, string collectionName, string sortCriteria)
         {
             var sort = Builders<BsonDocument>.Sort.Descending(sortCriteria);
@@ -154,11 +157,11 @@ namespace SATBot_v0.Models
             return latestDoc;
         }
 
+        //Get last document by _id
         public BsonDocument GetLast(string collectionName)
         {
             var sort = Builders<BsonDocument>.Sort.Descending("_id");
-
-
+            
             var database = GetDatabase();
             var collection = database.GetCollection<BsonDocument>(collectionName);
             var docs = collection.Find(new BsonDocument()).Sort(sort);
@@ -167,9 +170,10 @@ namespace SATBot_v0.Models
             return latestDoc;
         }
 
-        public BsonDocument GetFilter(string collectionName, string filterField, string filterCriteria)
+        //Search and return list of all results (empty list if no results)
+        public List<BsonDocument> GetFilter(string collectionName, string fieldName, string searchKey)
         {
-            var filter = Builders<BsonDocument>.Filter.Regex(filterField, new BsonRegularExpression(".*" + filterCriteria + ".*", "i"));
+            var filter = Builders<BsonDocument>.Filter.Regex(fieldName, new BsonRegularExpression(".*" + searchKey + ".*", "i"));
             var database = GetDatabase();
             var collection = database.GetCollection<BsonDocument>(collectionName);
             var results = collection.Find(filter);
@@ -179,7 +183,7 @@ namespace SATBot_v0.Models
                 Console.WriteLine(doc);
             }
 
-            return null;
+            return results.ToList();
         }
 
         public List<StockListing> GetStocks(string filterField, string filterCriteria)
@@ -200,8 +204,5 @@ namespace SATBot_v0.Models
 
             return stocks;
         }
-
-
-
     }
 }

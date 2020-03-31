@@ -33,8 +33,10 @@ namespace SATBot_v0.Models
         {
             var newsApiClient = new NewsApiClient(Resource.News_API_Key);
 
-            var response = await newsApiClient.GetTopHeadlinesAsync(new TopHeadlinesRequest()
+            var response = await newsApiClient.GetEverythingAsync(new EverythingRequest()
             {
+                Q = "*",
+                From = new DateTime(2020, 03, 30),
                 Language = Languages.EN,
                 PageSize = 20
             });
