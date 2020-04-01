@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using Google.Cloud.Language.V1;
 using Google.Protobuf;
 using Google.Rpc.Context;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
+using NewsAPI.Models;
 using Newtonsoft.Json;
 using SATBot_v0.Models;
 
@@ -16,7 +19,7 @@ namespace SATBot_v0
          * @TODO:
          * 
          * - Write News Results Into news_info - DONE! woo!
-         * - Write Sentiment Results Into sentiment_results
+         * - Write Sentiment Results Into sentiment_results - Done! yayyyyy!
          * - Do Basic Company Lookup (search by sentiment: entity - type = organization)
          * - Write Company to stock_info
          * 
@@ -120,30 +123,20 @@ namespace SATBot_v0
                     if (!isInserted)
                     {
                         Console.WriteLine();
-                        //Insert the article to DB
+                        //Insert the article into DB
                         articleId = NewsAPIMethods.InsertArticle(article, conn);
                         Console.WriteLine($"Article: {article.Title} is sucessfully inserted at _id: {articleId}");
-                        Console.WriteLine("Performing entity sentiment analysis...");
-                        //Get Sentiment Entities
-                        var sentiment = NLPMethods.AnalyzeEntitySentimentAsync(article.Description);
-                        var sentimentResult = sentiment.Result;
-                        var entities = sentimentResult.Entities.ToList();
+
+                        // Perform sentiment analysis
+                        Console.WriteLine("Analyzing article sentiment...");
+                        var sentimentResponse = NLPMethods.AnalyzeSentimentAsync(articleId, article);
+                        var sentimentResult = sentimentResponse.Result;
+                        var sentimentDoc = sentimentResult.SentimentBsonDocument;
 
                         // Insert sentiment results to DB
-                        var sentimentResultId = NLPMethods.InsertEntitySentiment(articleId, entities, conn);
+                        var sentimentResultId = NLPMethods.InsertSentimentResult(sentimentDoc, conn);
                         Console.WriteLine($"Sucessfully inserted sentiment result of article (_id: {articleId}) at _id: {sentimentResultId}");
                         Console.WriteLine();
-
-                        /*
-                         * For each entity,
-                         * If type = organization
-                         * conn.GetStocks("SecurityName", entityValue);
-                         * If list.empty
-                         *      //write that it's empty into the db or ignore
-                         *
-                         * If !list.empty
-                         *      //write into stock_info
-                         */
                     }
                     else
                     {
@@ -161,9 +154,9 @@ namespace SATBot_v0
                    Description: Google and Microsoft have redesigned native form controls -- buttons and various input elements you see on web forms -- to look more harmonious and be more touch-friendly. They spent the past year working together to design a new theme and make built-in form .
                  */
 
-                var entitySentiment = NLPMethods.AnalyzeEntitySentimentAsync("Google and Microsoft have redesigned native form controls -- buttons and various input elements you see on web forms -- to look more harmonious and be more touch-friendly. They spent the past year working together to design a new theme and make built-in form.").Result;
+                var entitySentimentTest = NLPMethods.AnalyzeEntitySentimentAsync("Google and Microsoft have redesigned native form controls -- buttons and various input elements you see on web forms -- to look more harmonious and be more touch-friendly. They spent the past year working together to design a new theme and make built-in form.").Result;
                 Console.WriteLine("Google and Microsoft are working to make web forms more touch-friendly");
-                Console.WriteLine(entitySentiment);
+                Console.WriteLine(entitySentimentTest);
 
                 Console.WriteLine();
             }

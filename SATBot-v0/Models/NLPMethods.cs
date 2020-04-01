@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Google.Cloud.Language.V1;
+using Grpc.Core;
 using MongoDB.Bson;
+using NewsAPI.Models;
 using Newtonsoft.Json;
 
 namespace SATBot_v0.Models
@@ -51,11 +54,35 @@ namespace SATBot_v0.Models
         }
 
         /// <summary>
+        /// Analyze the article sentiment
+        /// </summary>
+        /// <param name="articleId">ObjectId of the article</param>
+        /// <param name="article">The article</param>
+        /// <returns>A tuple contains sentiment result in BsonDocument and list of entities</returns>
+        public static async Task<(BsonDocument SentimentBsonDocument, List<Entity> Entities)> AnalyzeSentimentAsync(ObjectId articleId, Article article)
+        {
+            //Get overall sentiment
+            Console.WriteLine("Perform overall sentiment analysis...");
+            var overallSentimentResponse = await NLPMethods.AnalyzeOverallSentimentAsync(article.Description);
+            var overallSentiment = overallSentimentResponse.DocumentSentiment;
+
+            //Get Sentiment Entities
+            Console.WriteLine("Performing entity sentiment analysis...");
+            var entitySentiment = await NLPMethods.AnalyzeEntitySentimentAsync(article.Description);
+            var entities = entitySentiment.Entities.ToList();
+
+            // Build a complete sentiment result (overall sentiment and entity sentiment)
+            BsonDocument sentimentResult = NLPMethods.BuildSentimentBsonDocument(articleId, overallSentiment, entities);
+
+            return (sentimentResult, entities);
+        }
+
+        /// <summary>
         /// The overall document sentiment analysis
         /// </summary>
         /// <param name="text">The content that needs to be analyzed</param>
         /// <returns>Result of the analysis in AnalyzeSentimentResponse object</returns>
-        public static async Task<AnalyzeSentimentResponse> AnalyzeSentimentAsync(string text)
+        public static async Task<AnalyzeSentimentResponse> AnalyzeOverallSentimentAsync(string text)
         {
             try
             {
@@ -67,7 +94,7 @@ namespace SATBot_v0.Models
             }
             catch (Exception e)
             {
-                throw new Exception("Exception at AnalyzeSentimentAsync!: " + e.Message);
+                throw new Exception("Exception at AnalyzeOverallSentimentAsync!: " + e.Message);
             }
         }
 
@@ -93,31 +120,44 @@ namespace SATBot_v0.Models
         }
 
         /// <summary>
-        /// Insert entity sentiment result into DB
+        /// Build entity sentiment result in bson document format
         /// </summary>
         /// <param name="articleId">ObjectId of the article</param>
         /// <param name="entities">List of entities</param>
+        /// <returns>Entity sentiment result in BsonDocument</returns>
+        public static BsonDocument BuildSentimentBsonDocument(ObjectId articleId, Sentiment overallSentiment, List<Entity> entities)
+        {
+            // Convert overall sentiment to BsonDocument
+            var bsonOverallSentiment = overallSentiment.ToBsonDocument();
+
+            // Convert list of entities -> JSON -> BsonDocument
+            var jsonEntities = $"{{ Entities: {JsonConvert.SerializeObject(entities)} }}";
+            var bsonEntities = BsonDocument.Parse(jsonEntities);
+
+            //Create Sentiment Bson Doc
+            BsonDocument sentimentDoc = new BsonDocument
+            {
+                { "NewsId", articleId },
+                { "OverallSentiment", bsonOverallSentiment },
+            };
+            sentimentDoc.AddRange(bsonEntities);
+            sentimentDoc.Add("AnalyzedAt", DateTime.Now);
+
+            return sentimentDoc;
+        }
+
+        /// <summary>
+        /// Insert entity sentiment result into DB
+        /// </summary>
+        /// <param name="entitySentimentBsonDocument">Entity sentiment result in BsonDocument</param>
         /// <param name="conn">MongoConnection</param>
         /// <returns>ObjectId of the inserted entity sentiment result</returns>
-        public static ObjectId InsertEntitySentiment(ObjectId articleId, List<Entity> entities, MongoConnection conn)
+        public static ObjectId InsertSentimentResult(BsonDocument sentimentBsonDocument, MongoConnection conn)
         {
             try
             {
-                // Convert list of entities -> JSON -> BsonDocument
-                var jsonEntities = $"{{ Entities: {JsonConvert.SerializeObject(entities)} }}";
-                var bsonEntities = BsonDocument.Parse(jsonEntities);
-
-                //Create Sentiment Bson Doc
-                BsonDocument sentimentDoc = new BsonDocument
-                {
-                    { "NewsId", articleId },
-                    { "NewsSentiment", "TBA" }
-                };
-                sentimentDoc.AddRange(bsonEntities);
-                sentimentDoc.Add("AnalyzedAt", DateTime.Now);
-
                 //Insert to DB
-                var sentimentDocId = conn.InsertDocument("sentiment_results", sentimentDoc);
+                var sentimentDocId = conn.InsertDocument("sentiment_results", sentimentBsonDocument);
 
                 return sentimentDocId;
             }
