@@ -20,7 +20,7 @@ namespace SATBot_v0
          * 
          * - Write News Results Into news_info - DONE! woo!
          * - Write Sentiment Results Into sentiment_results - Done! yayyyyy!
-         * - Do Basic Company Lookup (search by sentiment: entity - type = organization)
+         * - Do Basic Company Lookup (search by sentiment: entity - type = organization) - Done!
          * - Write Company to stock_info
          * 
          * For Demo/Testing:

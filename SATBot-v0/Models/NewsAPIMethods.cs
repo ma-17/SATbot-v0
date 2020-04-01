@@ -37,7 +37,7 @@ namespace SATBot_v0.Models
             var response = await newsApiClient.GetEverythingAsync(new EverythingRequest()
             {
                 Q = "*",
-                From = new DateTime(2020, 03, 30),
+                From = DateTime.Now.AddDays(-1),
                 Language = Languages.EN,
                 PageSize = 20
             });
