@@ -199,7 +199,6 @@ namespace SATBot_v0.Models
             {
                 var stockListing = BsonSerializer.Deserialize<StockListing>(doc);
                 stocks.Add(stockListing);
-                Console.WriteLine(stockListing.Symbol + " " + stockListing.SecurityName);
             }
 
             return stocks;

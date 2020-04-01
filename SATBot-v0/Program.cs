@@ -136,6 +136,33 @@ namespace SATBot_v0
                         // Insert sentiment results to DB
                         var sentimentResultId = NLPMethods.InsertSentimentResult(sentimentDoc, conn);
                         Console.WriteLine($"Sucessfully inserted sentiment result of article (_id: {articleId}) at _id: {sentimentResultId}");
+
+                        //Correlate entities and stocks
+                        Console.WriteLine("Correlating entities and stocks...");
+                        var entities = sentimentResult.Entities;
+                        foreach (var entity in entities)
+                        {
+                            if (entity.Type == Entity.Types.Type.Organization)
+                            {
+                                Console.WriteLine($"Entity Name: {entity.Name}");
+
+                                //Get stock info by entity's name
+                                var stocks = conn.GetStocks("SecurityName", entity.Name);
+                                if (stocks.Count > 0)
+                                {
+                                    foreach (var stock in stocks)
+                                    {
+                                        Console.WriteLine($"Symbol: {stock.Symbol} | Security Name: {stock.SecurityName} | Company Name: {stock.CompanyName}");
+
+                                        //@TODO: Insert stock info into DB
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Could not find any related stocks");
+                                }
+                            }
+                        }
                         Console.WriteLine();
                     }
                     else
