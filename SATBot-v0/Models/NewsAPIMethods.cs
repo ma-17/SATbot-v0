@@ -15,7 +15,7 @@ namespace SATBot_v0.Models
         /// <summary>
         /// Check if the news api key has been set up
         /// </summary>
-        /// <returns>Return True if the news api key is already set up. Otherwise, return False</returns>
+        /// <returns>True if the news api key is already set up</returns>
         public static bool IsNewsEnvironmentReady()
         {
             if (string.IsNullOrEmpty(Resource.News_API_Key))
@@ -49,15 +49,14 @@ namespace SATBot_v0.Models
             return response.Articles;
         }
 
-        public static string InsertToDB(Article article, MongoConnection conn)
+        /// <summary>
+        /// Check if the article is inserted into the database
+        /// </summary>
+        /// <param name="article">The article needs to be checked</param>
+        /// <param name="conn">MongoConnection</param>
+        /// <returns>True if the article is already inserted</returns>
+        public static bool IsInserted(Article article, MongoConnection conn, out ObjectId articleId)
         {
-            //Convert to Bson
-            var doc = article.ToBsonDocument();
-
-            //Add Retrieved At
-            DateTime now = DateTime.Now;
-            doc.Add(new BsonElement("RetrievedAt", now));
-
             string title = article.Title;
             DateTime? publishedAt = article.PublishedAt;
 
@@ -71,38 +70,62 @@ namespace SATBot_v0.Models
                     {
                         foreach (BsonDocument result in results)
                         {
-                            var publishedAtCurrent = new BsonDateTime((DateTime)publishedAt);
                             var publishedAtResult = result.GetValue("PublishedAt");
 
                             if (publishedAt == publishedAtResult)
                             {
-                                return "Article: \"" + title + "\" exists in db with id: " + result.GetValue("_id");
+                                //Console.WriteLine("Article: \"" + title + "\" exists in db with id: " + result.GetValue("_id"));
+                                articleId = result.GetValue("_id").AsObjectId;
+                                return true;
                             }
                         }
-                    }                    
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
 
+            articleId = new ObjectId();
+            return false;
+        }
+
+        /// <summary>
+        /// Insert article into db
+        /// </summary>
+        /// <param name="article">The article</param>
+        /// <param name="conn">MongoConnection</param>
+        /// <returns>ObjectId of the inserted article</returns>
+        public static ObjectId InsertArticle(Article article, MongoConnection conn)
+        {
+            //Convert to Bson
+            var doc = article.ToBsonDocument();
+
+            //Add Retrieved At
+            DateTime now = DateTime.Now;
+            doc.Add(new BsonElement("RetrievedAt", now));
+
+            try
+            {
                 //Insert to DB
-                conn.InsertDocument("news_info", doc);
+                ObjectId id = conn.InsertDocument("news_info", doc);
 
                 //@TODO: TO BE TESTED - not 100% sure it's working properly.
                 //Retrieve last item and return _id
-                List<BsonDocument> lastArticle = conn.GetFilter("news_info", "RetrievedAt", now.ToString());
+                /*List<BsonDocument> lastArticle = conn.GetFilter("news_info", "RetrievedAt", now.ToString());
                 if (lastArticle.Count > 0)
                 {
                     return lastArticle[0].GetValue("_id").ToString();
                 } else
                 {
                     return conn.GetLast("news_info").GetValue("_id").ToString();
-                }
-
-
+                }*/
+                return id;
             } catch (Exception ex)
             {
-                return "Exception at NewsAPIMethods InsertToFB!: " + ex.Message;
+                throw new Exception("Exception at NewsAPIMethods InsertArticle!: " + ex.Message);
             }
-
-            return "Successfully added article to db";
         }
     }
 }

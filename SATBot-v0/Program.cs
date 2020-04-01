@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Linq;
 using Google.Protobuf;
 using Google.Rpc.Context;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using Newtonsoft.Json;
 using SATBot_v0.Models;
 
 namespace SATBot_v0
@@ -98,78 +101,69 @@ namespace SATBot_v0
                 Console.WriteLine();
                 CheckApplicationEnvironment();
                 
+                Console.WriteLine();
+                Console.WriteLine("-------------------------------------------------------------------------------");
+                Console.WriteLine();
+
                 //Retrieve Articles
+                Console.WriteLine("Retrieving articles...");
                 var articles = NewsAPIMethods.RetrieveNewsAsync().Result;
-                Console.WriteLine("Retrieved articles maybe");
-                Console.WriteLine(articles);
 
-                Console.WriteLine("Articles:\n");
-
+                Console.WriteLine();
+                Console.WriteLine("Processing articles...\n");
                 //Write Articles to DB
                 foreach (var article in articles)
                 {
-                    //Insert to DB
-                    string result = NewsAPIMethods.InsertToDB(article, conn);
-                    Console.WriteLine(result);
-                    Console.WriteLine();
-
-                    //Get Sentiment Entities
-                    var sentiment = NLPMethods.AnalyzeEntitySentimentAsync(article.Description);
-                    var sentimentResult = sentiment.Result;
-                    var entities = sentimentResult.Entities;
-
-                    //Add Entities to BsonArray
-                    BsonArray entityArray = new BsonArray();
-                    foreach (var entity in entities)
+                    // Check if the article is already inserted (skip the insertion if it is)
+                    var articleId = new ObjectId();
+                    bool isInserted = NewsAPIMethods.IsInserted(article, conn, out articleId);
+                    if (!isInserted)
                     {
-                        entityArray.Add(entity.ToBsonDocument());
+                        Console.WriteLine();
+                        //Insert the article to DB
+                        articleId = NewsAPIMethods.InsertArticle(article, conn);
+                        Console.WriteLine($"Article: {article.Title} is sucessfully inserted at _id: {articleId}");
+                        Console.WriteLine("Performing entity sentiment analysis...");
+                        //Get Sentiment Entities
+                        var sentiment = NLPMethods.AnalyzeEntitySentimentAsync(article.Description);
+                        var sentimentResult = sentiment.Result;
+                        var entities = sentimentResult.Entities.ToList();
+
+                        // Insert sentiment results to DB
+                        var sentimentResultId = NLPMethods.InsertEntitySentiment(articleId, entities, conn);
+                        Console.WriteLine($"Sucessfully inserted sentiment result of article (_id: {articleId}) at _id: {sentimentResultId}");
+                        Console.WriteLine();
+
+                        /*
+                         * For each entity,
+                         * If type = organization
+                         * conn.GetStocks("SecurityName", entityValue);
+                         * If list.empty
+                         *      //write that it's empty into the db or ignore
+                         *
+                         * If !list.empty
+                         *      //write into stock_info
+                         */
                     }
-
-                    //Create Sentiment Bson Doc
-                    BsonDocument sentimentDoc = new BsonDocument
+                    else
                     {
-                        { "new_info_id", result },
-                        { "overall_news_sentiment", "TBA" },
-                        { "entities", entityArray },
-                        { "analyzed_at", DateTime.Now }
-                    };
-
-                    //Insert to DB
-                    conn.InsertDocument("sentiment_results", sentimentDoc);
+                        Console.WriteLine($"Article: {article.Title} already exists with _id: {articleId}");
+                    }
                 }
-                
-                //Sentiment Analysis Stuff
-                Console.WriteLine("---------------------------------------------------------------------------------------");
-                Console.WriteLine("Entity Sentiment Analysis of the first article:\n");
-                Console.WriteLine($"Title: {articles[0].Title}");
-                Console.WriteLine($"Description: {articles[0].Description}\n");
-                Console.WriteLine("Results:\n");
 
-                var entitySentiment = NLPMethods.AnalyzeEntitySentimentAsync(articles[0].Description).Result;
-
-                Console.WriteLine(entitySentiment);
-
-                /*
-                 * For each entity,
-                 * If type = organization
-                 * conn.GetStocks("SecurityName", entityValue);
-                 * If list.empty
-                 *      //write that it's empty into the db or ignore
-                 *
-                 * If !list.empty
-                 *      //write into stock_info
-                 */
-
+                Console.WriteLine();
+                Console.WriteLine("-------------------------------------------------------------------------------");
+                Console.WriteLine();
+                Console.WriteLine("Demo Entity Sentiment: ");
                 /*
                  * Test/Sample Article:
                  * Title: Google and Microsoft are working to make web forms more touch-friendly
                    Description: Google and Microsoft have redesigned native form controls -- buttons and various input elements you see on web forms -- to look more harmonious and be more touch-friendly. They spent the past year working together to design a new theme and make built-in form .
                  */
 
-                var entitySentimentTest = NLPMethods.AnalyzeEntitySentimentAsync("Google and Microsoft have redesigned native form controls -- buttons and various input elements you see on web forms -- to look more harmonious and be more touch-friendly. They spent the past year working together to design a new theme and make built-in form.").Result;
+                var entitySentiment = NLPMethods.AnalyzeEntitySentimentAsync("Google and Microsoft have redesigned native form controls -- buttons and various input elements you see on web forms -- to look more harmonious and be more touch-friendly. They spent the past year working together to design a new theme and make built-in form.").Result;
                 Console.WriteLine("Google and Microsoft are working to make web forms more touch-friendly");
-                Console.WriteLine(entitySentimentTest);
-
+                Console.WriteLine(entitySentiment);
 
                 Console.WriteLine();
             }
@@ -179,9 +173,6 @@ namespace SATBot_v0
             }
         }
 
-        /// <summary>
-        /// Check all application environment
-        /// </summary>
         public static void CheckApplicationEnvironment()
         {
             Console.WriteLine("Checking NewsAPI environment");

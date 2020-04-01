@@ -22,7 +22,6 @@ namespace SATBot_v0.Models
 
             var client = new MongoClient(connectionString);
             var database = client.GetDatabase("SATbot");
-
         }
 
         public MongoClient GetClient()
@@ -60,31 +59,37 @@ namespace SATBot_v0.Models
         }
 
         //Insert Document Into Collection
-        public string InsertDocument(string collectionName, BsonDocument document)
+        public ObjectId InsertDocument(string collectionName, BsonDocument document)
         {
             try
             {
                 var collection = GetCollection(collectionName);
                 collection.InsertOne(document);
-                return "Insert success!";
 
+                // Get inserted doc's _id
+                ObjectId id = document["_id"].AsObjectId;
+
+                return id;
             } catch (Exception ex)
             {
-                return "Exception!: " + ex.StackTrace;
+                throw new Exception(ex.StackTrace);
             }
         }        
 
-        public string InsertDocument(string dbName, string collectionName, BsonDocument document)
+        public ObjectId InsertDocument(string dbName, string collectionName, BsonDocument document)
         {
             try
             {
                 var collection = GetCollection(dbName, collectionName);
                 collection.InsertOne(document);
-                return "Insert success!";
 
+                // Get inserted doc's _id
+                ObjectId id = document["_id"].AsObjectId;
+
+                return id;
             } catch (Exception ex)
             {
-                return "Exception!: " + ex.StackTrace;
+                throw new Exception(ex.StackTrace);
             }
         }
 
