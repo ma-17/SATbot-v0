@@ -62,7 +62,7 @@ namespace SATBot_v0.Models
 
             try
             {
-                List<BsonDocument> results = conn.GetFilter("news_info", "Title", title);
+                List<BsonDocument> results = conn.GetFilter("news_info", "Title", title, true);
 
                 if (results.Count > 0)
                 {
@@ -97,7 +97,7 @@ namespace SATBot_v0.Models
         /// <param name="article">The article</param>
         /// <param name="conn">MongoConnection</param>
         /// <returns>ObjectId of the inserted article</returns>
-        public static ObjectId InsertArticle(Article article, MongoConnection conn)
+        public static BsonDocument InsertArticle(Article article, MongoConnection conn)
         {
             //Convert to Bson
             var doc = article.ToBsonDocument();
@@ -110,18 +110,17 @@ namespace SATBot_v0.Models
             {
                 //Insert to DB
                 ObjectId id = conn.InsertDocument("news_info", doc);
+                List<BsonDocument> getDocs = conn.GetById("news_info", id);
 
-                //@TODO: TO BE TESTED - not 100% sure it's working properly.
-                //Retrieve last item and return _id
-                /*List<BsonDocument> lastArticle = conn.GetFilter("news_info", "RetrievedAt", now.ToString());
-                if (lastArticle.Count > 0)
+                if (getDocs.Count > 0)
                 {
-                    return lastArticle[0].GetValue("_id").ToString();
+                    return getDocs[0];
                 } else
                 {
-                    return conn.GetLast("news_info").GetValue("_id").ToString();
-                }*/
-                return id;
+                    return null;
+                }
+
+                //return id;
             } catch (Exception ex)
             {
                 throw new Exception("Exception at NewsAPIMethods InsertArticle!: " + ex.Message);

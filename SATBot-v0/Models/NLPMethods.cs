@@ -59,7 +59,7 @@ namespace SATBot_v0.Models
         /// <param name="articleId">ObjectId of the article</param>
         /// <param name="article">The article</param>
         /// <returns>A tuple contains sentiment result in BsonDocument and list of entities</returns>
-        public static async Task<(BsonDocument SentimentBsonDocument, List<Entity> Entities)> AnalyzeSentimentAsync(ObjectId articleId, Article article)
+        public static async Task<(BsonDocument SentimentBsonDocument, List<Entity> Entities)> AnalyzeSentimentAsync(BsonDocument articleBson, Article article)
         {
             //Get overall sentiment
             Console.WriteLine("Perform overall sentiment analysis...");
@@ -72,7 +72,7 @@ namespace SATBot_v0.Models
             var entities = entitySentiment.Entities.ToList();
 
             // Build a complete sentiment result (overall sentiment and entity sentiment)
-            BsonDocument sentimentResult = NLPMethods.BuildSentimentBsonDocument(articleId, overallSentiment, entities);
+            BsonDocument sentimentResult = NLPMethods.BuildSentimentBsonDocument(articleBson, overallSentiment, entities);
 
             return (sentimentResult, entities);
         }
@@ -125,7 +125,7 @@ namespace SATBot_v0.Models
         /// <param name="articleId">ObjectId of the article</param>
         /// <param name="entities">List of entities</param>
         /// <returns>Entity sentiment result in BsonDocument</returns>
-        public static BsonDocument BuildSentimentBsonDocument(ObjectId articleId, Sentiment overallSentiment, List<Entity> entities)
+        public static BsonDocument BuildSentimentBsonDocument(BsonDocument article, Sentiment overallSentiment, List<Entity> entities)
         {
             // Convert overall sentiment to BsonDocument
             var bsonOverallSentiment = overallSentiment.ToBsonDocument();
@@ -133,11 +133,11 @@ namespace SATBot_v0.Models
             // Convert list of entities -> JSON -> BsonDocument
             var jsonEntities = $"{{ Entities: {JsonConvert.SerializeObject(entities)} }}";
             var bsonEntities = BsonDocument.Parse(jsonEntities);
-
+            
             //Create Sentiment Bson Doc
             BsonDocument sentimentDoc = new BsonDocument
             {
-                { "NewsId", articleId },
+                { "NewsId", article },
                 { "OverallSentiment", bsonOverallSentiment },
             };
             sentimentDoc.AddRange(bsonEntities);

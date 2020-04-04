@@ -4,6 +4,7 @@ using System.Text;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
+using MongoDB.Driver.Builders;
 
 namespace SATBot_v0.Models
 {
@@ -19,9 +20,6 @@ namespace SATBot_v0.Models
         {
             connectionString = Resource.DBConnectionString;
             databaseName = "SATbot";
-
-            var client = new MongoClient(connectionString);
-            var database = client.GetDatabase("SATbot");
         }
 
         public MongoClient GetClient()
@@ -66,7 +64,8 @@ namespace SATBot_v0.Models
                 var collection = GetCollection(collectionName);
                 collection.InsertOne(document);
 
-                // Get inserted doc's _id
+                // Get inserted doc's _id 
+                // @QUESTION: How does this work???
                 ObjectId id = document["_id"].AsObjectId;
 
                 return id;
@@ -176,9 +175,11 @@ namespace SATBot_v0.Models
         }
 
         //Search and return list of all results (empty list if no results)
-        public List<BsonDocument> GetFilter(string collectionName, string fieldName, string searchKey)
+        public List<BsonDocument> GetFilter(string collectionName, string fieldName, string searchKey, bool ignoreCase)
         {
-            var filter = Builders<BsonDocument>.Filter.Regex(fieldName, new BsonRegularExpression(".*" + searchKey + ".*", "i"));
+            var filter = ignoreCase ?
+                Builders<BsonDocument>.Filter.Regex(fieldName, new BsonRegularExpression(".*" + searchKey + ".*", "i")) :
+                Builders<BsonDocument>.Filter.Regex(fieldName, new BsonRegularExpression(".*" + searchKey + ".*"));
             var database = GetDatabase();
             var collection = database.GetCollection<BsonDocument>(collectionName);
             var results = collection.Find(filter);
@@ -186,6 +187,28 @@ namespace SATBot_v0.Models
             return results.ToList();
         }
 
+        public List<BsonDocument> GetFilterEq(string collectionName, string fieldName, string searchKey)
+        {
+            var database = GetDatabase();
+            var collection = database.GetCollection<BsonDocument>(collectionName);
+            var filter = Builders<BsonDocument>.Filter.Eq(fieldName, searchKey);
+
+            var results = collection.Find(filter);
+            return results.ToList();
+        }
+
+        public List<BsonDocument> GetById(string collectionName, ObjectId id)
+        {
+            var database = GetDatabase();
+            var collection = database.GetCollection<BsonDocument>(collectionName);
+            var filter = Builders<BsonDocument>.Filter.Eq("_id", id);
+
+            var results = collection.Find(filter);
+            return results.ToList();
+        }
+        
+        //Moved to StockCorrelation!!
+        /*
         public List<StockListing> GetStocks(string filterField, string filterCriteria)
         {
             var filter = Builders<BsonDocument>.Filter.Regex(filterField, new BsonRegularExpression(".*" + filterCriteria + ".*"));
@@ -203,5 +226,6 @@ namespace SATBot_v0.Models
 
             return stocks;
         }
+        */
     }
 }
