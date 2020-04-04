@@ -157,49 +157,22 @@ namespace SATBot_v0
                         var entities = sentimentResult.Entities;
                         foreach (var entity in entities)
                         {
-                            if (entity.Type == Entity.Types.Type.Organization)
+                            //Run stock correlation
+                            var stocks = StockCorrelation.RunCorrelation(conn, entity);
+                            if (stocks.Count > 0)
                             {
-                                Console.WriteLine($"Entity Name: {entity.Name}");
-
-                                //Get stock info by entity's name
-                                //var stocks = conn.GetStocks("SecurityName", entity.Name);
-                                var stocks = StockCorrelation.GetStocks(conn, "SecurityName", entity.Name);
-                                if (stocks.Count > 0)
+                                foreach (var stock in stocks)
                                 {
-                                    foreach (var stock in stocks)
-                                    {
-                                        Console.WriteLine($"Symbol: {stock.Symbol} | Security Name: {stock.SecurityName} | Company Name: {stock.CompanyName}");
+                                    Console.WriteLine($"Symbol: {stock.Symbol} | " +
+                                        $"Security Name: {stock.SecurityName} | " +
+                                        $"Company Name: {stock.CompanyName}");
 
-                                        //@TODO: Insert stock info into DB
-
-                                        StockCorrelation stockCorrelation = new StockCorrelation();
-                                        stockCorrelation.InitEmpty();
-
-                                        stockCorrelation.SentimentResult = sentimentDoc;     
-                                        stockCorrelation.StockListing = stock.ToBsonDocument();
-
-                                        ObjectId stockCorrelationId = new ObjectId();
-
-                                        stockCorrelationId = conn.InsertDocument("stock_info", 
-                                            stockCorrelation.GetBsonDocument());
-
-                                        if (stockCorrelationId == null || stockCorrelationId.Equals(""))
-                                        {
-                                            Console.WriteLine("Stock Correlation: " +
-                                                "Insert Document returned empty? "
-                                                + stockCorrelationId);
-                                        } else
-                                        {
-                                            Console.WriteLine("Stock Correlation: " +
-                                                "Successfully inserted stock correlation into stock_info at id: " +
-                                                stockCorrelationId);
-                                        }                                        
-                                    }
-                                }
-                                else
-                                {
-                                    Console.WriteLine("Could not find any related stocks");
-                                }
+                                    StockCorrelation.InsertToStockInfo(conn, sentimentDoc, stock.ToBsonDocument(), 
+                                        "", "", "", "");
+                                }                                
+                            } else
+                            {
+                                Console.WriteLine($"Could not correlate entity value {entity.Name} to any stocks.");
                             }
                         }
                         Console.WriteLine();
@@ -229,6 +202,7 @@ namespace SATBot_v0
             catch (Exception e)
             {
                 Console.WriteLine(e.StackTrace);
+                Console.WriteLine(e.Message);
             }
         }
 
