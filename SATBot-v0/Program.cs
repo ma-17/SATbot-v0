@@ -167,6 +167,7 @@ namespace SATBot_v0
                                         $"Security Name: {stock.SecurityName} | " +
                                         $"Company Name: {stock.CompanyName}");
 
+                                    //Insert to db
                                     StockCorrelation.InsertToStockInfo(conn, sentimentDoc, stock.ToBsonDocument(), 
                                         "", "", "", "");
                                 }                                
