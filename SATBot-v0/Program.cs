@@ -105,7 +105,7 @@ namespace SATBot_v0
                 //Environment Check
                 Console.WriteLine();
                 CheckApplicationEnvironment();
-                
+
                 Console.WriteLine();
                 Console.WriteLine("-------------------------------------------------------------------------------");
                 Console.WriteLine();
@@ -131,11 +131,11 @@ namespace SATBot_v0
                         Console.WriteLine();
                         //Insert the article into DB
                         articleBson = NewsAPIMethods.InsertArticle(article, conn);
-                        
+
                         //Null check
                         if (articleBson == null)
                         {
-                            throw new Exception("NewsAPIMethods.InsertArticle returned a null object for: " 
+                            throw new Exception("NewsAPIMethods.InsertArticle returned a null object for: "
                                 + article.Title + "\n");
                         }
 
@@ -155,27 +155,27 @@ namespace SATBot_v0
                         //Correlate entities and stocks
                         Console.WriteLine("Correlating entities and stocks...");
                         var entities = sentimentResult.Entities;
-                        foreach (var entity in entities)
-                        {
-                            //Run stock correlation
-                            var stocks = StockCorrelation.RunCorrelation(conn, entity);
-                            if (stocks.Count > 0)
-                            {
-                                foreach (var stock in stocks)
-                                {
-                                    Console.WriteLine($"Symbol: {stock.Symbol} | " +
-                                        $"Security Name: {stock.SecurityName} | " +
-                                        $"Company Name: {stock.CompanyName}");
 
-                                    //Insert to db
-                                    StockCorrelation.InsertToStockInfo(conn, sentimentDoc, stock.ToBsonDocument(), 
-                                        "", "", "", "");
-                                }                                
-                            } else
+                        //Run stock correlation
+                        var stocks = StockCorrelation.RunCorrelation(conn, entities);
+                        if (stocks.Count > 0)
+                        {
+                            foreach (var stock in stocks)
                             {
-                                Console.WriteLine($"Could not correlate entity value {entity.Name} to any stocks.");
+                                Console.WriteLine($"Symbol: {stock.Symbol} | " +
+                                    $"Security Name: {stock.SecurityName} | " +
+                                    $"Company Name: {stock.CompanyName}");
+
+                                //Insert to db
+                                StockCorrelation.InsertToStockInfo(conn, sentimentDoc, stock.ToBsonDocument(),
+                                    "", "", "", "");
                             }
                         }
+                        else
+                        {
+                            Console.WriteLine($"Could not correlate entities to any stocks.");
+                        }
+
                         Console.WriteLine();
                     }
                     else

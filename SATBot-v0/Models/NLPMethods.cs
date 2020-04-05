@@ -69,7 +69,11 @@ namespace SATBot_v0.Models
 
             // Get text categories
             Console.WriteLine("Classifying article...");
-            var categories = await ClassifyArticleCategoriesAsync(article.Description);
+            List<ClassificationCategory> categories = new List<ClassificationCategory>();
+            if (article.Description.Count(c => c == ' ') > 19)
+            {
+                categories = await ClassifyArticleCategoriesAsync(article.Description);
+            }
 
             //Get Sentiment Entities
             Console.WriteLine("Performing entity sentiment analysis...");
