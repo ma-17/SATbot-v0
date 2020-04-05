@@ -209,29 +209,8 @@ namespace SATBot_v0.Models
             return results.ToList();
         }
 
-        //Moved to StockCorrelation!!
-        /*
-        public List<StockListing> GetStocks(string filterField, string filterCriteria)
-        {
-            var filter = Builders<BsonDocument>.Filter.Regex(filterField, new BsonRegularExpression(".*" + filterCriteria + ".*"));
-            var database = GetDatabase();
-            var collection = database.GetCollection<BsonDocument>("stock_listing");
-            var results = collection.Find(filter);
-
-            List<StockListing> stocks = new List<StockListing>();
-            
-            foreach(BsonDocument doc in results.ToList())
-            {
-                var stockListing = BsonSerializer.Deserialize<StockListing>(doc);
-                stocks.Add(stockListing);
-            }
-
-            return stocks;
-        }
-        */
-
         /// <summary>
-        /// Update document
+        /// Update value of a field in a document
         /// </summary>
         /// <param name="collectionName">The collection</param>
         /// <param name="conditions">Dictionary of filter fields and their values</param>
@@ -251,9 +230,37 @@ namespace SATBot_v0.Models
                 }
 
                 var update = Builders<BsonDocument>.Update.Set(updatedField, newValue);
-                var result = collection.UpdateOne(filters, update);
+                collection.UpdateOne(filters, update);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.StackTrace);
+            }
+        }
 
-                Console.WriteLine($"Updated document at {result}");
+        /// <summary>
+        /// Add a value to an array unless the value is already present.
+        /// The method will fail the field is not an array.
+        /// </summary>
+        /// <param name="collectionName">The collection</param>
+        /// <param name="conditions">Dictionary of filter fields and their values</param>
+        /// <param name="updatedArrayField">The array field that should be updated</param>
+        /// <param name="newValue">New value</param>
+        public void AddDocumentToArray(string collectionName, Dictionary<string, object> conditions, string updatedArrayField, BsonDocument newValue)
+        {
+            try
+            {
+                var collection = GetCollection(collectionName);
+
+                var filters = FilterDefinition<BsonDocument>.Empty;
+                foreach (var condition in conditions)
+                {
+                    var filter = Builders<BsonDocument>.Filter.Eq(condition.Key, condition.Value);
+                    filters &= filter;
+                }
+
+                var update = Builders<BsonDocument>.Update.AddToSet(updatedArrayField, newValue);
+                collection.UpdateOne(filters, update);
             }
             catch (Exception ex)
             {
