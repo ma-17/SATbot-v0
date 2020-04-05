@@ -1,31 +1,48 @@
-﻿@{
-    ViewBag.Title = "Home Page";
+﻿@using SATDash_v0.Models
+@{
+    ViewBag.Title = "SATBot Prototype Demo";
 }
-
-<div class="jumbotron">
-    <h1>ASP.NET</h1>
-    <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
-    <p><a href="https://asp.net" class="btn btn-primary btn-lg">Learn more &raquo;</a></p>
+<h1>SATBot Key Feature Demo</h1>
+<div>
+    This is a demonstration of our bot's ability to:
+    <ul>
+        <li>Retrieve news articles</li>
+        <li>Identify article entities</li>
+        <li>Correlate articles to NYSE &Aacute; NASDAQ listed stocks based on entity analysis</li>
+    </ul>
 </div>
-
-<div class="row">
-    <div class="col-md-4">
-        <h2>Getting started</h2>
-        <p>
-            ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
-            enables a clean separation of concerns and gives you full control over markup
-            for enjoyable, agile development.
-        </p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
-    </div>
-    <div class="col-md-4">
-        <h2>Get more libraries</h2>
-        <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
-    </div>
-    <div class="col-md-4">
-        <h2>Web Hosting</h2>
-        <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
-    </div>
+<div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>News</th>
+                <th>Entities</th>
+                <th>Stocks</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(Result r in ViewBag.Results)
+            {
+                <tr>
+                    <td>
+                        <h4>@r.ArticleName</h4>
+                        <p>@r.ArticleDescription</p>
+                    </td>
+                    <td>
+                        @for(int i = 0; i < r.EntityType.Count() && i < r.EntityValue.Count(); i++)
+                        {
+                            <div>
+                                @r.EntityValue[i]<br />
+                                Type: @r.EntityType[i]
+                                <hr />
+                            </div>
+                        }
+                    </td>
+                    <td>
+                        @r.StockSymbol - @r.CompanyName
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>
