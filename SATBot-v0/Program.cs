@@ -102,6 +102,20 @@ namespace SATBot_v0
                 END DB TESTING
                 */
 
+                // Testing update document
+                // Id: 5e882e837a8776451859996a
+                // keyword: Google
+                // stockSymbol: GOOG
+                // occurrences: 1    
+                // After updating: occurrences: 3
+                Console.WriteLine("Test Update document: related_entities/companies/occurences");
+                var objectId = conn.GetFilterEq("related_entities", "keyword", "Google").ToList()[0]["_id"].AsObjectId;
+                Console.WriteLine($"ObjectId: {objectId}");
+                Dictionary<string, object> conditions = new Dictionary<string, object>();
+                conditions.Add("_id", objectId);
+                conditions.Add("companies.stockSymbol", "GOOG");
+                conn.UpdateDocument("related_entities", conditions, "companies.$.occurrences", 3);
+
                 //Environment Check
                 Console.WriteLine();
                 CheckApplicationEnvironment();

@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using MongoDB.Driver.Builders;
+using WebSocket4Net;
 
 namespace SATBot_v0.Models
 {
@@ -206,7 +208,7 @@ namespace SATBot_v0.Models
             var results = collection.Find(filter);
             return results.ToList();
         }
-        
+
         //Moved to StockCorrelation!!
         /*
         public List<StockListing> GetStocks(string filterField, string filterCriteria)
@@ -227,5 +229,36 @@ namespace SATBot_v0.Models
             return stocks;
         }
         */
+
+        /// <summary>
+        /// Update document
+        /// </summary>
+        /// <param name="collectionName">The collection</param>
+        /// <param name="conditions">Dictionary of filter fields and their values</param>
+        /// <param name="updatedField">The field that should be updated</param>
+        /// <param name="newValue">New value</param>
+        public void UpdateDocument(string collectionName, Dictionary<string, object> conditions, string updatedField, object newValue)
+        {
+            try
+            {
+                var collection = GetCollection(collectionName);
+
+                var filters = FilterDefinition<BsonDocument>.Empty;
+                foreach (var condition in conditions)
+                {
+                    var filter = Builders<BsonDocument>.Filter.Eq(condition.Key, condition.Value);
+                    filters &= filter;
+                }
+
+                var update = Builders<BsonDocument>.Update.Set(updatedField, newValue);
+                var result = collection.UpdateOne(filters, update);
+
+                Console.WriteLine($"Updated document at {result}");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.StackTrace);
+            }
+        }
     }
 }

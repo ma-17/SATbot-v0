@@ -4,6 +4,7 @@ using MongoDB.Bson.Serialization;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace SATBot_v0.Models
@@ -216,7 +217,10 @@ namespace SATBot_v0.Models
                             }
 
                             //@TODO: IMPLEMENT PLACEHOLDER UPDATE
-                            //conn.Update("related_entities", relatedEntity["id"], relatedEntity);
+                            var objectId = lookup[0]["_id"].AsObjectId;
+                            Dictionary<string, object> conditions = new Dictionary<string, object>();
+                            conditions.Add("_id", objectId);
+                            conn.UpdateDocument("related_entities", conditions, "companies", companies);
                         }
                         else
                         {
