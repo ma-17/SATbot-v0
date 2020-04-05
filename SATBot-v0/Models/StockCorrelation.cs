@@ -1,6 +1,7 @@
 ﻿using Google.Cloud.Language.V1;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -46,19 +47,24 @@ namespace SATBot_v0.Models
             return doc;
         }
 
-        public static List<StockListing> RunCorrelation(MongoConnection conn, Entity entity)
+        public static List<StockListing> RunCorrelation(MongoConnection conn, Entity entity, List<Entity> entities)
         {
             List<StockListing> nameMatch = new List<StockListing>();
-            List<StockListing> relatedMatch = new List<StockListing>();
+            List<StockListing> relatedMatch;
+
+            //Check related entities
+            relatedMatch = CheckRelatedEntities(conn, entity.Name);
 
             //Check by organization name
             if (entity.Type == Entity.Types.Type.Organization)
             {                
                 nameMatch = GetStocks(conn, "SecurityName", entity.Name, false);
+                if (nameMatch.Count > 0)
+                {
+                    //Add/update entity in the related_entities table
+                    ProcessAllEntities(conn, entity, nameMatch, entities);
+                }
             }
-
-            //Check related entities
-            relatedMatch = CheckRelatedEntities(conn, entity.Name);
 
             //Add all stocks to list
             List<StockListing> stocks = new List<StockListing>(nameMatch.Count + relatedMatch.Count);
@@ -151,6 +157,8 @@ namespace SATBot_v0.Models
                 stocks.Add(stockListing);
             }
 
+            //@TODO: Add a field to stock_listing for # of article mentions, so we can track related_entities hit rate by %
+
             return stocks;
         }
 
@@ -166,6 +174,70 @@ namespace SATBot_v0.Models
             }
 
             return ignore;
+        }
+
+        public static void ProcessAllEntities(MongoConnection conn, Entity nameMatch, List<StockListing> stocks, List<Entity> entities)
+        {
+            foreach (StockListing stock in stocks)
+            {
+                foreach(Entity entity in entities)
+                {
+                    if (entity.Name != nameMatch.Name)
+                    {
+                        List<BsonDocument> lookup = conn.GetFilterEq("related_entities", "keyword", entity.Name);
+
+                        if (lookup.Count > 0)
+                        {
+                            if (lookup.Count > 1) { Console.WriteLine($"Found multiple related_entities entries for '{entity.Name}', please check the database and combine duplicate entries into a single entry."); }
+
+                            BsonDocument relatedEntity = lookup[0];
+                            BsonArray companies = relatedEntity["companies"].AsBsonArray;
+
+                            if (relatedEntity.ToString().Contains(stock.Symbol))
+                            {
+                                foreach (BsonDocument company in companies)
+                                {
+                                    if (company["stockSymbol"].ToString() == stock.Symbol)
+                                    {
+                                        int occurrences = company["occurrences"].ToInt32() + 1;
+                                        company.SetElement(new BsonElement("occurrences", occurrences));
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                BsonDocument newCompany = new BsonDocument();
+
+                                newCompany.Add("stockSymbol", stock.Symbol);
+                                newCompany.Add("occurrences", 1);
+                                newCompany.Add("verified", false);
+
+                                companies.Add(newCompany);
+                            }
+
+                            //@TODO: IMPLEMENT PLACEHOLDER UPDATE
+                            //conn.Update("related_entities", relatedEntity["id"], relatedEntity);
+                        }
+                        else
+                        {
+                            BsonDocument newRelatedEntity = new BsonDocument();
+                            newRelatedEntity.Add("keyword", entity.Name);
+
+                            BsonArray companies = new BsonArray();
+                            BsonDocument newCompany = new BsonDocument();
+
+                            newCompany.Add("stockSymbol", stock.Symbol);
+                            newCompany.Add("occurrences", 1);
+                            newCompany.Add("verified", false);
+
+                            companies.Add(newCompany);
+                            newRelatedEntity.Add("companies", companies);
+
+                            conn.InsertDocument("related_entities", newRelatedEntity);
+                        }
+                    }
+                }
+            }
         }
     }
 }
