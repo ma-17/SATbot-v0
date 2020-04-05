@@ -140,7 +140,7 @@ namespace SATBot_v0
                         }
 
                         articleId = new ObjectId(articleBson.GetValue("_id", "No id found??").ToString());
-                        Console.WriteLine($"Article: {article.Title} is sucessfully inserted at _id: {articleId}");
+                        Console.WriteLine($"Article: {article.Title} is successfully inserted at _id: {articleId}");
 
                         // Perform sentiment analysis
                         Console.WriteLine("Analyzing article sentiment...");
@@ -150,7 +150,7 @@ namespace SATBot_v0
 
                         // Insert sentiment results to DB
                         var sentimentResultId = NLPMethods.InsertSentimentResult(sentimentDoc, conn);
-                        Console.WriteLine($"Sucessfully inserted sentiment result of article (_id: {articleId}) at _id: {sentimentResultId}");
+                        Console.WriteLine($"Successfully inserted sentiment result of article (_id: {articleId}) at _id: {sentimentResultId}");
 
                         //Correlate entities and stocks
                         Console.WriteLine("Correlating entities and stocks...");

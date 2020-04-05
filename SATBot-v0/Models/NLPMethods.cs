@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -62,9 +63,13 @@ namespace SATBot_v0.Models
         public static async Task<(BsonDocument SentimentBsonDocument, List<Entity> Entities)> AnalyzeSentimentAsync(BsonDocument articleBson, Article article)
         {
             //Get overall sentiment
-            Console.WriteLine("Perform overall sentiment analysis...");
+            Console.WriteLine("Performing overall sentiment analysis...");
             var overallSentimentResponse = await NLPMethods.AnalyzeOverallSentimentAsync(article.Description);
             var overallSentiment = overallSentimentResponse.DocumentSentiment;
+
+            // Get text categories
+            Console.WriteLine("Classifying article...");
+            var categories = await ClassifyArticleCategoriesAsync(article.Description);
 
             //Get Sentiment Entities
             Console.WriteLine("Performing entity sentiment analysis...");
@@ -72,7 +77,7 @@ namespace SATBot_v0.Models
             var entities = entitySentiment.Entities.ToList();
 
             // Build a complete sentiment result (overall sentiment and entity sentiment)
-            BsonDocument sentimentResult = NLPMethods.BuildSentimentBsonDocument(articleBson, overallSentiment, entities);
+            BsonDocument sentimentResult = NLPMethods.BuildSentimentBsonDocument(articleBson, overallSentiment, entities, categories);
 
             return (sentimentResult, entities);
         }
@@ -120,12 +125,38 @@ namespace SATBot_v0.Models
         }
 
         /// <summary>
+        /// Retrieve test categories
+        /// </summary>
+        /// <param name="text">The content that needs to be analyzed</param>
+        /// <returns>List of categories of the content</returns>
+        public static async Task<List<ClassificationCategory>> ClassifyArticleCategoriesAsync(string text)
+        {
+            try
+            {
+                var client = LanguageServiceClient.Create();
+                var response = await client.ClassifyTextAsync(new Document()
+                {
+                    Content = text,
+                    Type = Document.Types.Type.PlainText
+                });
+
+                var categories = response.Categories.ToList();
+
+                return categories;
+            }
+            catch (Exception  e)
+            {
+                throw new Exception("Exception at ClassifyArticleCategoriesAsync!: " + e.Message);
+            }
+        }
+
+        /// <summary>
         /// Build entity sentiment result in bson document format
         /// </summary>
         /// <param name="articleId">ObjectId of the article</param>
         /// <param name="entities">List of entities</param>
         /// <returns>Entity sentiment result in BsonDocument</returns>
-        public static BsonDocument BuildSentimentBsonDocument(BsonDocument article, Sentiment overallSentiment, List<Entity> entities)
+        public static BsonDocument BuildSentimentBsonDocument(BsonDocument article, Sentiment overallSentiment, List<Entity> entities, List<ClassificationCategory> categories)
         {
             // Convert overall sentiment to BsonDocument
             var bsonOverallSentiment = overallSentiment.ToBsonDocument();
@@ -133,14 +164,19 @@ namespace SATBot_v0.Models
             // Convert list of entities -> JSON -> BsonDocument
             var jsonEntities = $"{{ Entities: {JsonConvert.SerializeObject(entities)} }}";
             var bsonEntities = BsonDocument.Parse(jsonEntities);
-            
+
+            // Convert list of categories -> JSON -> BsonDocument
+            var jsonCategories = $"{{ Categories: {JsonConvert.SerializeObject(categories)} }}";
+            var bsonCategories = BsonDocument.Parse(jsonCategories);
+
             //Create Sentiment Bson Doc
             BsonDocument sentimentDoc = new BsonDocument
             {
-                { "NewsId", article },
+                { "News", article },
                 { "OverallSentiment", bsonOverallSentiment },
             };
             sentimentDoc.AddRange(bsonEntities);
+            sentimentDoc.AddRange(bsonCategories);
             sentimentDoc.Add("AnalyzedAt", DateTime.Now);
 
             return sentimentDoc;
