@@ -214,39 +214,34 @@ namespace SATBot_v0.Models
                                         if (company["stockSymbol"].ToString() == stock.Symbol)
                                         {
                                             int occurrences = company["occurrences"].ToInt32() + 1;
-                                            company.SetElement(new BsonElement("occurrences", occurrences));
+
+                                            // Update occurrences of the company
+                                            var objectId = relatedEntity["_id"].AsObjectId;
+                                            Dictionary<string, object> conditions = new Dictionary<string, object>
+                                            {
+                                                { "_id", objectId },
+                                                {"companies.stockSymbol", stock.Symbol}
+                                            };
+                                            conn.UpdateDocument("related_entities", conditions, "companies.$.occurrences", occurrences);
                                         }
                                     }
                                 }
                                 else
                                 {
-                                    BsonDocument newCompany = new BsonDocument();
+                                    var newCompany = BuildCompanyBsonDocument(stock.Symbol);
 
-                                    newCompany.Add("stockSymbol", stock.Symbol);
-                                    newCompany.Add("occurrences", 1);
-                                    newCompany.Add("verified", false);
-
-                                    companies.Add(newCompany);
+                                    // Add the company into companies of the entity
+                                    var objectId = relatedEntity["_id"].AsObjectId;
+                                    Dictionary<string, object> conditions = new Dictionary<string, object>
+                                    {
+                                        {"_id", objectId}
+                                    };
+                                    conn.AddDocumentToArray("related_entities", conditions, "companies", newCompany);
                                 }
-
-                                //@TODO: IMPLEMENT PLACEHOLDER UPDATE
-                                //conn.Update("related_entities", relatedEntity["id"], relatedEntity);
                             }
                             else
                             {
-                                BsonDocument newRelatedEntity = new BsonDocument();
-                                newRelatedEntity.Add("keyword", entity.Name);
-
-                                BsonArray companies = new BsonArray();
-                                BsonDocument newCompany = new BsonDocument();
-
-                                newCompany.Add("stockSymbol", stock.Symbol);
-                                newCompany.Add("occurrences", 1);
-                                newCompany.Add("verified", false);
-
-                                companies.Add(newCompany);
-                                newRelatedEntity.Add("companies", companies);
-
+                                var newRelatedEntity = BuildRelatedEntityBsonDocument(entity.Name, stock.Symbol);
                                 conn.InsertDocument("related_entities", newRelatedEntity);
                             }
                         }
@@ -257,6 +252,31 @@ namespace SATBot_v0.Models
                 Console.WriteLine(ex.StackTrace);
                 Console.WriteLine(ex.Message);
             }
+        }
+
+        public static BsonDocument BuildCompanyBsonDocument(string stockSymbol)
+        {
+            BsonDocument company = new BsonDocument();
+
+            company.Add("stockSymbol", stockSymbol);
+            company.Add("occurrences", 1);
+            company.Add("verified", false);
+
+            return company;
+        }
+
+        public static BsonDocument BuildRelatedEntityBsonDocument(string entity, string stockSymbol)
+        {
+            BsonDocument relatedEntity = new BsonDocument();
+            relatedEntity.Add("keyword", entity);
+
+            BsonArray companies = new BsonArray();
+            var company = BuildCompanyBsonDocument(stockSymbol);
+
+            companies.Add(company);
+            relatedEntity.Add("companies", companies);
+
+            return relatedEntity;
         }
     }
 }
