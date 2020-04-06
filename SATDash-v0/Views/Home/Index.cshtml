@@ -2,17 +2,18 @@
 @{
     ViewBag.Title = "SATBot Prototype Demo";
 }
+
 <h1>SATBot Key Feature Demo</h1>
 <div>
     This is a demonstration of our bot's ability to:
     <ul>
         <li>Retrieve news articles</li>
         <li>Identify article entities</li>
-        <li>Correlate articles to NYSE &Aacute; NASDAQ listed stocks based on entity analysis</li>
+        <li>Correlate articles to NYSE and NASDAQ listed stocks based on entity analysis</li>
     </ul>
 </div>
 <div>
-    <table class="table">
+    <table id="results-main" class="table table-hover">
         <thead>
             <tr>
                 <th>News</th>
@@ -21,7 +22,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach(Result r in ViewBag.Results)
+            @foreach (Result r in ViewBag.Results)
             {
                 <tr>
                     <td>
@@ -29,7 +30,7 @@
                         <p>@r.ArticleDescription</p>
                     </td>
                     <td>
-                        @for(int i = 0; i < r.EntityTypes.Count() && i < r.EntityValues.Count(); i++)
+                        @for (int i = 0; i < r.EntityTypes.Count() && i < r.EntityValues.Count(); i++)
                         {
                             <div>
                                 @r.EntityValues[i]<br />
@@ -51,4 +52,20 @@
             }
         </tbody>
     </table>
+    <div>
+        @foreach(string l in ViewBag.Debug)
+        {
+            @l<br/>
+        }
+    </div>
 </div>
+
+@section scripts {
+
+    <script>
+        $(document).ready(function () {
+            $("#results-main").DataTable();
+        });
+    </script>
+
+    }

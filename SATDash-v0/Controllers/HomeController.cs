@@ -16,6 +16,7 @@ namespace SATDash_v0.Controllers
             var stockInfo = db.GetAllDocuments("stock_info");
 
             List<Result> results = new List<Result>();
+            List<string> debug = new List<string>();
 
             foreach(BsonDocument info in stockInfo)
             {
@@ -25,7 +26,7 @@ namespace SATDash_v0.Controllers
 
                 try
                 {     
-                    string articleId = news["_id"].ToString();
+                    ObjectId articleId = news["_id"].AsObjectId;
                     string symbol = stockListing["Symbol"].AsString;
                     string name = stockListing["SecurityName"].AsString;
                     string title = news["Title"].AsString;
@@ -33,8 +34,9 @@ namespace SATDash_v0.Controllers
                     BsonArray entitiesArray = sentimentResult["Entities"].AsBsonArray;
                     
                     var getDoc = from result in results
-                                 where result.ArticleId == articleId
+                                 where result.ArticleDescription == descr
                                  select result;
+                    
                     Result r;
                     if (getDoc.Count() > 0)
                     {
@@ -69,6 +71,7 @@ namespace SATDash_v0.Controllers
             }
 
             ViewBag.Results = results;
+            ViewBag.Debug = debug;
 
             return View();
         }

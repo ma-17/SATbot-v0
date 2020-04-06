@@ -177,11 +177,23 @@ namespace SATBot_v0.Models
         }
 
         //Search and return list of all results (empty list if no results)
-        public List<BsonDocument> GetFilter(string collectionName, string fieldName, string searchKey, bool ignoreCase)
+        public List<BsonDocument> GetFilterPartial(string collectionName, string fieldName, string searchKey, bool ignoreCase)
         {
             var filter = ignoreCase ?
                 Builders<BsonDocument>.Filter.Regex(fieldName, new BsonRegularExpression(".*" + searchKey + ".*", "i")) :
                 Builders<BsonDocument>.Filter.Regex(fieldName, new BsonRegularExpression(".*" + searchKey + ".*"));
+            var database = GetDatabase();
+            var collection = database.GetCollection<BsonDocument>(collectionName);
+            var results = collection.Find(filter);
+            
+            return results.ToList();
+        }
+
+        public List<BsonDocument> GetFilterWord(string collectionName, string fieldName, string searchKey, bool ignoreCase)
+        {
+            var filter = ignoreCase ?
+                Builders<BsonDocument>.Filter.Regex(fieldName, new BsonRegularExpression(".*" + searchKey + "[^A-Za-z].*", "i")) :
+                Builders<BsonDocument>.Filter.Regex(fieldName, new BsonRegularExpression(".*" + searchKey + "[^A-Za-z].*"));
             var database = GetDatabase();
             var collection = database.GetCollection<BsonDocument>(collectionName);
             var results = collection.Find(filter);

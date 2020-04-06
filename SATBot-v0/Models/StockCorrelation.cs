@@ -163,7 +163,7 @@ namespace SATBot_v0.Models
             //Get correlated stocks - based on organization entity partial match
             List<BsonDocument> results = exact ? 
                 conn.GetFilterEq("stock_listing", filterField, filterCriteria) :
-                conn.GetFilter("stock_listing", filterField, filterCriteria, false);
+                conn.GetFilterWord("stock_listing", filterField, filterCriteria, false);
             foreach (BsonDocument doc in results)
             {
                 var stockListing = BsonSerializer.Deserialize<StockListing>(doc);
