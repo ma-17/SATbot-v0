@@ -1,0 +1,53 @@
+﻿@using SATDash_v0.Models
+@{
+    ViewBag.Title = "Index";
+}
+
+<h1>SATBot Related Entities</h1>
+<div>
+</div>
+<div>
+    <table class="table table-hover" id="results-re">
+        <thead>
+            <tr>
+                <th>Entity</th>
+                <th>Stocks</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (RelatedEntities r in ViewBag.Results)
+            {
+                <tr>
+                    <td>
+                        <h4>@r.Keyword</h4>
+                    </td>
+                    <td>
+                        @for (int i = 0;
+                            i < r.StockSymbols.Count() &&
+                            i < r.Occurrences.Count() &&
+                            i < r.Verified.Count();
+                            i++)
+                        {
+                            <div>
+                                Stock Symbol: @r.StockSymbols[i]<br />
+                                Occurrences: @r.Occurrences[i]<br />
+                                Verified: @r.Verified[i]
+                                <hr />
+                            </div>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section scripts {
+
+    <script>
+        $(document).ready(function () {
+            $("#results-re").DataTable();
+        });
+    </script>
+
+}

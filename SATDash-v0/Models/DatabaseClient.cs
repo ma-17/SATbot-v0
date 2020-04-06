@@ -1,16 +1,13 @@
-﻿using System;
+﻿using MongoDB.Bson;
+using MongoDB.Driver;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
-using MongoDB.Driver;
-using MongoDB.Driver.Builders;
-using WebSocket4Net;
+using System.Web;
 
-namespace SATBot_v0.Models
+namespace SATDash_v0.Models
 {
-    public class MongoConnection
+    public class DatabaseClient
     {
         //https://www.mongodb.com/blog/post/quick-start-c-sharp-and-mongodb--creating-documents
         //https://www.mongodb.com/blog/post/quick-start-c-and-mongodb--read-operations
@@ -18,7 +15,7 @@ namespace SATBot_v0.Models
         private string connectionString;
         private string databaseName;
 
-        public MongoConnection()
+        public DatabaseClient()
         {
             connectionString = Resource.DBConnectionString;
             databaseName = "SATbot";
@@ -71,11 +68,12 @@ namespace SATBot_v0.Models
                 ObjectId id = document["_id"].AsObjectId;
 
                 return id;
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw new Exception(ex.StackTrace);
             }
-        }        
+        }
 
         public ObjectId InsertDocument(string dbName, string collectionName, BsonDocument document)
         {
@@ -88,7 +86,8 @@ namespace SATBot_v0.Models
                 ObjectId id = document["_id"].AsObjectId;
 
                 return id;
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw new Exception(ex.StackTrace);
             }
@@ -167,7 +166,7 @@ namespace SATBot_v0.Models
         public BsonDocument GetLast(string collectionName)
         {
             var sort = Builders<BsonDocument>.Sort.Descending("_id");
-            
+
             var database = GetDatabase();
             var collection = database.GetCollection<BsonDocument>(collectionName);
             var docs = collection.Find(new BsonDocument()).Sort(sort);
@@ -177,7 +176,7 @@ namespace SATBot_v0.Models
         }
 
         //Search and return list of all results (empty list if no results)
-        public List<BsonDocument> GetFilterPartial(string collectionName, string fieldName, string searchKey, bool ignoreCase)
+        public List<BsonDocument> GetFilter(string collectionName, string fieldName, string searchKey, bool ignoreCase)
         {
             var filter = ignoreCase ?
                 Builders<BsonDocument>.Filter.Regex(fieldName, new BsonRegularExpression(".*" + searchKey + ".*", "i")) :
@@ -185,19 +184,7 @@ namespace SATBot_v0.Models
             var database = GetDatabase();
             var collection = database.GetCollection<BsonDocument>(collectionName);
             var results = collection.Find(filter);
-            
-            return results.ToList();
-        }
 
-        public List<BsonDocument> GetFilterWord(string collectionName, string fieldName, string searchKey, bool ignoreCase)
-        {
-            var filter = ignoreCase ?
-                Builders<BsonDocument>.Filter.Regex(fieldName, new BsonRegularExpression(".*" + searchKey + "[^A-Za-z].*", "i")) :
-                Builders<BsonDocument>.Filter.Regex(fieldName, new BsonRegularExpression(".*" + searchKey + "[^A-Za-z].*"));
-            var database = GetDatabase();
-            var collection = database.GetCollection<BsonDocument>(collectionName);
-            var results = collection.Find(filter);
-            
             return results.ToList();
         }
 
@@ -219,65 +206,6 @@ namespace SATBot_v0.Models
 
             var results = collection.Find(filter);
             return results.ToList();
-        }
-
-        /// <summary>
-        /// Update value of a field in a document
-        /// </summary>
-        /// <param name="collectionName">The collection</param>
-        /// <param name="conditions">Dictionary of filter fields and their values</param>
-        /// <param name="updatedField">The field that should be updated</param>
-        /// <param name="newValue">New value</param>
-        public void UpdateDocument(string collectionName, Dictionary<string, object> conditions, string updatedField, object newValue)
-        {
-            try
-            {
-                var collection = GetCollection(collectionName);
-
-                var filters = FilterDefinition<BsonDocument>.Empty;
-                foreach (var condition in conditions)
-                {
-                    var filter = Builders<BsonDocument>.Filter.Eq(condition.Key, condition.Value);
-                    filters &= filter;
-                }
-
-                var update = Builders<BsonDocument>.Update.Set(updatedField, newValue);
-                collection.UpdateOne(filters, update);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.StackTrace);
-            }
-        }
-
-        /// <summary>
-        /// Add a value to an array unless the value is already present.
-        /// The method will fail the field is not an array.
-        /// </summary>
-        /// <param name="collectionName">The collection</param>
-        /// <param name="conditions">Dictionary of filter fields and their values</param>
-        /// <param name="updatedArrayField">The array field that should be updated</param>
-        /// <param name="newValue">New value</param>
-        public void AddDocumentToArray(string collectionName, Dictionary<string, object> conditions, string updatedArrayField, BsonDocument newValue)
-        {
-            try
-            {
-                var collection = GetCollection(collectionName);
-
-                var filters = FilterDefinition<BsonDocument>.Empty;
-                foreach (var condition in conditions)
-                {
-                    var filter = Builders<BsonDocument>.Filter.Eq(condition.Key, condition.Value);
-                    filters &= filter;
-                }
-
-                var update = Builders<BsonDocument>.Update.AddToSet(updatedArrayField, newValue);
-                collection.UpdateOne(filters, update);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.StackTrace);
-            }
         }
     }
 }

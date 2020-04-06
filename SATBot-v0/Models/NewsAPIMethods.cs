@@ -62,7 +62,7 @@ namespace SATBot_v0.Models
 
             try
             {
-                List<BsonDocument> results = conn.GetFilter("news_info", "Title", title, true);
+                List<BsonDocument> results = conn.GetFilterPartial("news_info", "Title", title, true);
 
                 if (results.Count > 0)
                 {

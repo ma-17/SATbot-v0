@@ -1,0 +1,71 @@
+﻿@using SATDash_v0.Models
+@{
+    ViewBag.Title = "SATBot Prototype Demo";
+}
+
+<h1>SATBot Key Feature Demo</h1>
+<div>
+    This is a demonstration of our bot's ability to:
+    <ul>
+        <li>Retrieve news articles</li>
+        <li>Identify article entities</li>
+        <li>Correlate articles to NYSE and NASDAQ listed stocks based on entity analysis</li>
+    </ul>
+</div>
+<div>
+    <table id="results-main" class="table table-hover">
+        <thead>
+            <tr>
+                <th>News</th>
+                <th>Entities</th>
+                <th>Stocks</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (Result r in ViewBag.Results)
+            {
+                <tr>
+                    <td>
+                        <h4>@r.ArticleName</h4>
+                        <p>@r.ArticleDescription</p>
+                    </td>
+                    <td>
+                        @for (int i = 0; i < r.EntityTypes.Count() && i < r.EntityValues.Count(); i++)
+                        {
+                            <div>
+                                @r.EntityValues[i]<br />
+                                Type: @r.EntityTypes[i]
+                                <hr />
+                            </div>
+                        }
+                    </td>
+                    <td>
+                        @for (int i = 0; i < r.StockSymbols.Count() && i < r.CompanyNames.Count(); i++)
+                        {
+                            <div>
+                                @r.StockSymbols[i] - @r.CompanyNames[i]
+                                <hr />
+                            </div>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <div>
+        @foreach(string l in ViewBag.Debug)
+        {
+            @l<br/>
+        }
+    </div>
+</div>
+
+@section scripts {
+
+    <script>
+        $(document).ready(function () {
+            $("#results-main").DataTable();
+        });
+    </script>
+
+    }
