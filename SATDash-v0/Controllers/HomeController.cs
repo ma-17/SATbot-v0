@@ -16,40 +16,55 @@ namespace SATDash_v0.Controllers
             var stockInfo = db.GetAllDocuments("stock_info");
 
             List<Result> results = new List<Result>();
+
             foreach(BsonDocument info in stockInfo)
             {
                 BsonDocument stockListing = info["StockListing"].AsBsonDocument; 
                 BsonDocument sentimentResult = info["SentimentResult"].AsBsonDocument; 
                 BsonDocument news = sentimentResult["News"].AsBsonDocument;
+
                 try
-                {
+                {     
+                    string articleId = news["_id"].ToString();
                     string symbol = stockListing["Symbol"].AsString;
                     string name = stockListing["SecurityName"].AsString;
                     string title = news["Title"].AsString;
                     string descr = news["Description"].AsString;
-
-                    List<string> entity = new List<string>();
-                    List<string> type = new List<string>();
-
-                    BsonArray entities = sentimentResult["Entities"].AsBsonArray;
-                    foreach (BsonDocument e in entities)
+                    BsonArray entitiesArray = sentimentResult["Entities"].AsBsonArray;
+                    
+                    var getDoc = from result in results
+                                 where result.ArticleId == articleId
+                                 select result;
+                    Result r;
+                    if (getDoc.Count() > 0)
                     {
-                        entity.Add(e["Name"].AsString);
-                        type.Add(e["Type"].ToString());
+                        r = getDoc.First();
+                    } else
+                    {
+                        r = new Result();
+                        r.ArticleId = articleId;
+                        r.ArticleName = title;
+                        r.ArticleDescription = descr;
+                    }
+                    
+                    r.StockSymbols.Add(symbol);
+                    r.CompanyNames.Add(name);
+
+                    foreach (BsonDocument e in entitiesArray)
+                    {
+                        r.EntityValues.Add(e["Name"].AsString);
+                        r.EntityTypes.Add(e["Type"].ToString());
                     }
 
-                    results.Add(new Result
+                    if (getDoc.Count() == 0)
                     {
-                        StockSymbol = symbol,
-                        CompanyName = name,
-                        ArticleName = title,
-                        ArticleDescription = descr,
-                        EntityValue = entity,
-                        EntityType = type
-                    });
+                        results.Add(r);
+                    }
+
                 } catch (Exception ex)
                 {
                     Console.WriteLine("Unable to process document:" + info.ToString());
+                    Console.WriteLine(ex.Message);
                 }
             }
 

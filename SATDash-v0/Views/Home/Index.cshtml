@@ -29,17 +29,23 @@
                         <p>@r.ArticleDescription</p>
                     </td>
                     <td>
-                        @for(int i = 0; i < r.EntityType.Count() && i < r.EntityValue.Count(); i++)
+                        @for(int i = 0; i < r.EntityTypes.Count() && i < r.EntityValues.Count(); i++)
                         {
                             <div>
-                                @r.EntityValue[i]<br />
-                                Type: @r.EntityType[i]
+                                @r.EntityValues[i]<br />
+                                Type: @r.EntityTypes[i]
                                 <hr />
                             </div>
                         }
                     </td>
                     <td>
-                        @r.StockSymbol - @r.CompanyName
+                        @for (int i = 0; i < r.StockSymbols.Count() && i < r.CompanyNames.Count(); i++)
+                        {
+                            <div>
+                                @r.StockSymbols[i] - @r.CompanyNames[i]
+                                <hr />
+                            </div>
+                        }
                     </td>
                 </tr>
             }
